@@ -11,8 +11,7 @@ struct Student
     struct Student *next;
 };
 
-struct Student *front = NULL;
-struct Student *rear = NULL;
+struct Student *top = NULL;
 
 int readInt(char message[])
 {
@@ -105,7 +104,7 @@ void readName(char name[], int size)
 
 int idExists(int searchID)
 {
-    struct Student *temp = front;
+    struct Student *temp = top;
 
     while (temp != NULL)
     {
@@ -162,7 +161,7 @@ float readMarks()
     }
 }
 
-void enqueue()
+void push()
 {
     struct Student *newNode;
 
@@ -181,34 +180,26 @@ void enqueue()
 
     newNode->marks = readMarks();
 
-    newNode->next = NULL;
+    newNode->next = top;
 
-    if (rear == NULL)
-    {
-        front = rear = newNode;
-    }
-    else
-    {
-        rear->next = newNode;
-        rear = newNode;
-    }
+    top = newNode;
 
     printf("\nStudent added successfully!\n");
 }
 
-void readQueue()
+void display()
 {
     struct Student *temp;
 
-    if (front == NULL)
+    if (top == NULL)
     {
-        printf("\nQueue is empty!\n");
+        printf("\nStack is empty!\n");
         return;
     }
 
-    temp = front;
+    temp = top;
 
-    printf("\n========== STUDENT QUEUE ==========\n");
+    printf("\n*** STUDENT STACK ***\n");
 
     while (temp != NULL)
     {
@@ -220,32 +211,27 @@ void readQueue()
         temp = temp->next;
     }
 
-    printf("\nStudents queue displayed successfully!\n");
+    printf("\nStudents stack displayed successfully!\n");
 }
 
-void dequeue()
+void pop()
 {
     struct Student *temp;
 
-    if (front == NULL)
+    if (top == NULL)
     {
-        printf("\nQueue is empty!\n");
+        printf("\nStack is empty!\n");
         return;
     }
 
-    temp = front;
+    temp = top;
 
     printf("\nDeleted Student:\n");
     printf("ID: %d\n", temp->id);
     printf("Name: %s\n", temp->name);
     printf("Marks: %.2f\n", temp->marks);
 
-    front = front->next;
-
-    if (front == NULL)
-    {
-        rear = NULL;
-    }
+    top = top->next;
 
     free(temp);
 
@@ -257,15 +243,21 @@ void updateStudent()
     int id;
     struct Student *temp;
 
-    if (front == NULL)
+    if (top == NULL)
     {
-        printf("\nQueue is empty!\n");
+        printf("\nStack is empty!\n");
         return;
     }
 
     id = readInt("Enter the ID of the student to update: ");
 
-    temp = front;
+    if (id <= 0)
+    {
+        printf("Invalid ID! ID must be greater than 0.\n");
+        return;
+    }
+
+    temp = top;
 
     while (temp != NULL)
     {
@@ -297,10 +289,10 @@ int main()
 
     while (1)
     {
-        printf("\n\n========== STUDENT QUEUE CRUD ==========\n");
+        printf("\n\n------ STUDENT STACK CRUD ------\n");
 
         printf("1. Create Student\n");
-        printf("2. Read Queue\n");
+        printf("2. Read Stack\n");
         printf("3. Delete Student\n");
         printf("4. Update Student\n");
         printf("5. Exit\n");
@@ -310,15 +302,15 @@ int main()
         switch (choice)
         {
             case 1:
-                enqueue();
+                push();
                 break;
 
             case 2:
-                readQueue();
+                display();
                 break;
 
             case 3:
-                dequeue();
+                pop();
                 break;
 
             case 4:

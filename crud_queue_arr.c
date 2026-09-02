@@ -18,9 +18,6 @@ struct Student queue[MAX];
 int front = -1;
 int rear = -1;
 
-
-// ================= READ INTEGER =================
-
 int readInt(char message[])
 {
     char input[100];
@@ -44,9 +41,6 @@ int readInt(char message[])
         printf("Invalid input! Please enter a number.\n");
     }
 }
-
-
-// ================= READ FLOAT =================
 
 float readFloat(char message[])
 {
@@ -72,9 +66,6 @@ float readFloat(char message[])
     }
 }
 
-
-// ================= VALIDATE NAME =================
-
 int validName(char name[])
 {
     int i;
@@ -94,9 +85,6 @@ int validName(char name[])
 
     return 1;
 }
-
-
-// ================= READ NAME =================
 
 void readName(char name[], int size)
 {
@@ -119,9 +107,6 @@ void readName(char name[], int size)
     }
 }
 
-
-// ================= CHECK ID =================
-
 int idExists(int searchID)
 {
     int i;
@@ -141,9 +126,6 @@ int idExists(int searchID)
 
     return 0;
 }
-
-
-// ================= READ ID =================
 
 int readID()
 {
@@ -168,9 +150,6 @@ int readID()
     }
 }
 
-
-// ================= READ AGE =================
-
 int readAge()
 {
     int age;
@@ -190,9 +169,6 @@ int readAge()
     }
 }
 
-
-// ================= READ MARKS =================
-
 float readMarks()
 {
     float marks;
@@ -211,9 +187,6 @@ float readMarks()
         }
     }
 }
-
-
-// ================= ENQUEUE / CREATE =================
 
 void enqueue()
 {
@@ -246,9 +219,6 @@ void enqueue()
     printf("\nStudent added successfully!\n");
 }
 
-
-// ================= DISPLAY / READ =================
-
 void display()
 {
     int i;
@@ -273,9 +243,6 @@ void display()
                queue[i].marks);
     }
 }
-
-
-// ================= UPDATE =================
 
 void update()
 {
@@ -321,9 +288,6 @@ void update()
     }
 }
 
-
-// ================= DEQUEUE / DELETE =================
-
 void dequeue()
 {
     if (front == -1 || front > rear)
@@ -348,9 +312,6 @@ void dequeue()
 
     printf("Student deleted successfully!\n");
 }
-
-
-// ================= MAIN =================
 
 int main()
 {
