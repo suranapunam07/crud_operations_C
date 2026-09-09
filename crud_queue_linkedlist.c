@@ -1,11 +1,11 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-struct Student
-{
-    int id;
+struct Student {
+    unsigned long long int id;
     char name[50];
     float marks;
     struct Student *next;
@@ -14,105 +14,72 @@ struct Student
 struct Student *front = NULL;
 struct Student *rear = NULL;
 
-int readInt(char message[])
-{
-    char input[100];
-    char extra;
+int readInt(char message[]) {
+    char input[100], extra;
     int value;
 
-    while (1)
-    {
+    while (1) {
         printf("%s", message);
 
         if (fgets(input, sizeof(input), stdin) == NULL)
-        {
             exit(0);
-        }
 
         if (sscanf(input, "%d %c", &value, &extra) == 1)
-        {
             return value;
-        }
 
-        printf("Invalid input! Please enter a number.\n");
+        printf("Invalid\n");
     }
 }
 
-float readFloat(char message[])
-{
-    char input[100];
-    char extra;
+float readFloat(char message[]) {
+    char input[100], extra;
     float value;
 
-    while (1)
-    {
+    while (1) {
         printf("%s", message);
 
         if (fgets(input, sizeof(input), stdin) == NULL)
-        {
             exit(0);
-        }
 
         if (sscanf(input, "%f %c", &value, &extra) == 1)
-        {
             return value;
-        }
 
-        printf("Invalid input! Please enter a valid number.\n");
+        printf("Invalid\n");
     }
 }
 
-int validName(char name[])
-{
-    int i;
-
+int validName(char name[]) {
     if (strlen(name) == 0)
-    {
         return 0;
-    }
 
-    for (i = 0; name[i] != '\0'; i++)
-    {
+    for (int i = 0; name[i] != '\0'; i++) {
         if (!isalpha((unsigned char)name[i]) && name[i] != ' ')
-        {
             return 0;
-        }
     }
 
     return 1;
 }
 
-void readName(char name[], int size)
-{
-    while (1)
-    {
+void readName(char name[], int size) {
+    while (1) {
         if (fgets(name, size, stdin) == NULL)
-        {
             exit(0);
-        }
 
         name[strcspn(name, "\n")] = '\0';
 
         if (validName(name))
-        {
             return;
-        }
 
-        printf("Invalid name! Name should contain only alphabets and spaces.\n");
-        printf("Enter name again: ");
+        printf("Invalid\n");
     }
 }
 
-int idExists(int searchID)
-{
+int idExists(unsigned long long int searchID) {
     struct Student *temp = front;
 
-    while (temp != NULL)
-    {
+    while (temp != NULL) {
         if (temp->id == searchID)
-        {
             return 1;
-        }
 
         temp = temp->next;
     }
@@ -120,57 +87,85 @@ int idExists(int searchID)
     return 0;
 }
 
-int readID()
-{
-    int id;
+unsigned long long int readID() {
+    char input[100], extra;
+    unsigned long long int id;
 
-    while (1)
-    {
-        id = readInt("Enter Student ID: ");
+    while (1) {
+        printf("Enter Student ID: ");
 
-        if (id <= 0)
-        {
-            printf("ID must be greater than 0!\n");
+        if (fgets(input, sizeof(input), stdin) == NULL)
+            exit(0);
+
+        if (input[0] == '-') {
+            printf("Invalid\n");
+            continue;
         }
-        else if (idExists(id))
-        {
-            printf("ID already exists! Enter a different ID.\n");
+
+        if (sscanf(input, "%llu %c", &id, &extra) != 1) {
+            printf("Invalid\n");
+            continue;
         }
-        else
-        {
-            return id;
+
+        if (id == 0 || idExists(id)) {
+            printf("Invalid\n");
+            continue;
         }
+
+        return id;
     }
 }
 
-float readMarks()
-{
+unsigned long long int readSearchID(char message[]) {
+    char input[100], extra;
+    unsigned long long int id;
+
+    while (1) {
+        printf("%s", message);
+
+        if (fgets(input, sizeof(input), stdin) == NULL)
+            exit(0);
+
+        if (input[0] == '-') {
+            printf("Invalid\n");
+            continue;
+        }
+
+        if (sscanf(input, "%llu %c", &id, &extra) != 1) {
+            printf("Invalid\n");
+            continue;
+        }
+
+        if (id == 0) {
+            printf("Invalid\n");
+            continue;
+        }
+
+        return id;
+    }
+}
+
+float readMarks() {
     float marks;
 
-    while (1)
-    {
+    while (1) {
         marks = readFloat("Enter Student Marks: ");
 
-        if (marks < 0 || marks > 100)
-        {
-            printf("Invalid marks! Marks must be between 0 and 100.\n");
+        if (marks < 0 || marks > 100) {
+            printf("Invalid\n");
         }
-        else
-        {
+        else {
             return marks;
         }
     }
 }
 
-void enqueue()
-{
-    struct Student *newNode;
+void enqueue() {
+    struct Student *newNode =
+        (struct Student *)malloc(sizeof(struct Student));
 
-    newNode = (struct Student *)malloc(sizeof(struct Student));
-
-    if (newNode == NULL)
-    {
-        printf("Unable to allocate memory!\n");
+    if (newNode == NULL) {
+        printf("Invalid\n");
         return;
     }
 
@@ -180,135 +175,109 @@ void enqueue()
     readName(newNode->name, sizeof(newNode->name));
 
     newNode->marks = readMarks();
-
     newNode->next = NULL;
 
-    if (rear == NULL)
-    {
+    if (rear == NULL) {
         front = rear = newNode;
     }
-    else
-    {
+    else {
         rear->next = newNode;
         rear = newNode;
     }
 
-    printf("\nStudent added successfully!\n");
+    printf("Added!\n");
 }
 
-void readQueue()
-{
-    struct Student *temp;
-
-    if (front == NULL)
-    {
-        printf("\nQueue is empty!\n");
+void readQueue() {
+    if (front == NULL) {
+        printf("Invalid\n");
         return;
     }
 
-    temp = front;
+    struct Student *temp = front;
 
-    printf("\n========== STUDENT QUEUE ==========\n");
+    printf("\nID\tName\tMarks\n");
+    printf("-------------------------\n");
 
-    while (temp != NULL)
-    {
-        printf("ID: %d | Name: %s | Marks: %.2f\n",
+    while (temp != NULL) {
+        printf("%llu\t%s\t%.2f\n",
                temp->id,
                temp->name,
                temp->marks);
 
         temp = temp->next;
     }
-
-    printf("\nStudents queue displayed successfully!\n");
 }
 
-void dequeue()
-{
-    struct Student *temp;
-
-    if (front == NULL)
-    {
-        printf("\nQueue is empty!\n");
+void dequeue() {
+    if (front == NULL) {
+        printf("Invalid\n");
         return;
     }
 
-    temp = front;
+    struct Student *temp = front;
 
-    printf("\nDeleted Student:\n");
-    printf("ID: %d\n", temp->id);
-    printf("Name: %s\n", temp->name);
-    printf("Marks: %.2f\n", temp->marks);
+    printf("Deleted: %llu %s %.2f\n",
+           temp->id,
+           temp->name,
+           temp->marks);
 
     front = front->next;
 
     if (front == NULL)
-    {
         rear = NULL;
-    }
 
     free(temp);
 
-    printf("\nStudent deleted successfully!\n");
+    printf("Deleted!\n");
 }
 
-void updateStudent()
-{
-    int id;
-    struct Student *temp;
-
-    if (front == NULL)
-    {
-        printf("\nQueue is empty!\n");
+void updateStudent() {
+    if (front == NULL) {
+        printf("Invalid\n");
         return;
     }
 
-    id = readInt("Enter the ID of the student to update: ");
+    unsigned long long int id =
+        readSearchID("Enter ID to Update: ");
 
-    temp = front;
+    struct Student *temp = front;
+    int found = 0;
 
-    while (temp != NULL)
-    {
-        if (temp->id == id)
-        {
-            printf("\nStudent found!\n");
-            printf("Current Name: %s\n", temp->name);
-            printf("Current Marks: %.2f\n", temp->marks);
-
-            printf("\nEnter new name: ");
+    while (temp != NULL) {
+        if (temp->id == id) {
+            printf("Enter new name: ");
             readName(temp->name, sizeof(temp->name));
 
             temp->marks = readMarks();
 
-            printf("\nStudent updated successfully!\n");
+            found = 1;
 
-            return;
+            printf("Updated!\n");
+            break;
         }
 
         temp = temp->next;
     }
 
-    printf("\nStudent not found!\n");
+    if (!found)
+        printf("Invalid\n");
 }
 
-int main()
-{
+int main() {
     int choice;
 
-    while (1)
-    {
-        printf("\n\n========== STUDENT QUEUE CRUD ==========\n");
-
-        printf("1. Create Student\n");
-        printf("2. Read Queue\n");
-        printf("3. Delete Student\n");
-        printf("4. Update Student\n");
+    while (1) {
+        printf("\nSTUDENT QUEUE CRUD\n");
+        printf("1. Create\n");
+        printf("2. Read\n");
+        printf("3. Delete\n");
+        printf("4. Update\n");
         printf("5. Exit\n");
 
         choice = readInt("Enter choice: ");
 
-        switch (choice)
-        {
+        switch (choice) {
             case 1:
                 enqueue();
                 break;
@@ -326,13 +295,10 @@ int main()
                 break;
 
             case 5:
-                printf("\nProgram exited.\n");
                 return 0;
 
             default:
-                printf("Invalid choice! Please enter a number from 1 to 5.\n");
+                printf("Invalid\n");
         }
     }
-
-    return 0;
 }
