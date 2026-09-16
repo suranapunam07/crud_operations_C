@@ -2,31 +2,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
+#define MAX_ATTEMPTS 3
 
-int readInt(char message[])
+unsigned int readUnsignedInt(char message[])
 {
     char input[100];
+    unsigned long int value;
     char extra;
-    int value;
+    int attempts = 0;
 
-    while (1)
+    while (attempts < MAX_ATTEMPTS)
     {
         printf("%s", message);
 
         if (fgets(input, sizeof(input), stdin) == NULL)
-        {
             exit(0);
-        }
 
-        
-        if (sscanf(input, "%d %c", &value, &extra) == 1)
+        if (sscanf(input, "%lu %c", &value, &extra) == 1)
         {
-            return value;
+            if (value <= UINT_MAX)
+                return value;
         }
 
-        printf("Invalid input!\n");
+        attempts++;
+        printf("Invalid\n");
     }
+
+    printf("Returning to main menu...\n");
+    return UINT_MAX;
 }
 
 int validName(char name[])
@@ -34,56 +39,88 @@ int validName(char name[])
     int i;
 
     if (strlen(name) == 0)
-    {
         return 0;
-    }
 
     for (i = 0; name[i] != '\0'; i++)
     {
         if (!isalpha((unsigned char)name[i]) && name[i] != ' ')
-        {
             return 0;
-        }
     }
 
     return 1;
 }
 
-void readName(char name[], int size)
+int readName(char name[], int size)
 {
-    while (1)
+    int attempts = 0;
+
+    while (attempts < MAX_ATTEMPTS)
     {
         if (fgets(name, size, stdin) == NULL)
-        {
             exit(0);
-        }
 
         name[strcspn(name, "\n")] = '\0';
 
         if (validName(name))
-        {
-            return;
-        }
+            return 1;
 
-        printf("Invalid name!\n");
-        printf("Enter name again: ");
+        attempts++;
+        printf("Invalid\n");
     }
+
+    printf("Returning to main menu...\n");
+    return 0;
 }
 
-int idExists(int searchID)
+float readMarks(char message[])
+{
+    float marks;
+    int attempts = 0;
+
+    while (attempts < MAX_ATTEMPTS)
+    {
+        printf("%s", message);
+
+        if (scanf("%f", &marks) != 1)
+        {
+            printf("Invalid\n");
+
+            while (getchar() != '\n');
+
+            attempts++;
+        }
+        else if (marks < 0 || marks > 100)
+        {
+            printf("Invalid\n");
+
+            while (getchar() != '\n');
+
+            attempts++;
+        }
+        else
+        {
+            while (getchar() != '\n');
+            return marks;
+        }
+    }
+
+    printf("Returning to main menu...\n");
+    return -1;
+}
+
+int idExists(unsigned int searchID)
 {
     FILE *fp;
-    int id;
+    unsigned int id;
+    float marks;
     char name[100];
 
     fp = fopen("data.txt", "r");
 
     if (fp == NULL)
-    {
         return 0;
-    }
 
-    while (fscanf(fp, "%d %99[^\n]", &id, name) == 2)
+    while (fscanf(fp, "%u %f %[^\n]", &id, &marks, name) == 3)
     {
         if (id == searchID)
         {
@@ -96,31 +133,52 @@ int idExists(int searchID)
     return 0;
 }
 
+int fileHasRecords()
+{
+    FILE *fp;
+    unsigned int id;
+    float marks;
+    char name[100];
+
+    fp = fopen("data.txt", "r");
+
+    if (fp == NULL)
+        return 0;
+
+    if (fscanf(fp, "%u %f %[^\n]", &id, &marks, name) == 3)
+    {
+        fclose(fp);
+        return 1;
+    }
+
+    fclose(fp);
+    return 0;
+}
 
 int main()
 {
     FILE *fp, *temp;
 
-    int choice;
-    int id;
-    int search;
-    int found;
+    unsigned int id, search;
+    float marks;
 
-    char name[100];
+    int found, choice, attempts;
+
+    char name[100], line[256];
 
     while (1)
     {
-        
-        printf("       CRUD SYSTEM\n");
-        
-
+        printf("\nCRUD SYSTEM\n");
         printf("1. Create\n");
         printf("2. Read\n");
         printf("3. Update\n");
         printf("4. Delete\n");
         printf("5. Exit\n");
 
-        choice = readInt("Enter your choice: ");
+        choice = readUnsignedInt("Enter your choice: ");
+
+        if (choice == UINT_MAX)
+            continue;
 
         switch (choice)
         {
@@ -130,17 +188,26 @@ int main()
 
                 if (fp == NULL)
                 {
-                    printf("Error opening file!\n");
+                    printf("Invalid\n");
                     break;
                 }
 
-                while (1)
-                {
-                    id = readInt("Enter ID: ");
+                attempts = 0;
 
-                    if (idExists(id))
+                while (attempts < MAX_ATTEMPTS)
+                {
+                    id = readUnsignedInt("Enter ID: ");
+
+                    if (id == UINT_MAX)
                     {
-                        printf("ID already exists!\n");
+                        fclose(fp);
+                        break;
+                    }
+
+                    if (id == 0 || idExists(id))
+                    {
+                        attempts++;
+                        printf("Invalid\n");
                     }
                     else
                     {
@@ -148,14 +215,34 @@ int main()
                     }
                 }
 
-                printf("Enter name: ");
-                readName(name, sizeof(name));
+                if (attempts == MAX_ATTEMPTS || id == UINT_MAX)
+                {
+                    fclose(fp);
+                    printf("Returning to main menu...\n");
+                    break;
+                }
 
-                fprintf(fp, "%d %s\n", id, name);
+                printf("Enter name: ");
+
+                if (!readName(name, sizeof(name)))
+                {
+                    fclose(fp);
+                    break;
+                }
+
+                marks = readMarks("Enter Marks: ");
+
+                if (marks == -1)
+                {
+                    fclose(fp);
+                    break;
+                }
+
+                fprintf(fp, "%u %.2f %s\n", id, marks, name);
 
                 fclose(fp);
 
-                printf("Record added successfully!\n");
+                printf("Record added!\n");
 
                 break;
 
@@ -166,128 +253,278 @@ int main()
 
                 if (fp == NULL)
                 {
-                    printf("No record found!\n");
+                    printf("No records found!\n");
                     break;
                 }
 
-                printf("\n");
-                printf("ID\tName\n");
-                printf("--------\n");
+                printf("\nID\tName\tMarks\n");
+                printf("---------------------------\n");
 
-                while (fscanf(fp, "%d %99[^\n]", &id, name) == 2)
+                found = 0;
+
+                while (fgets(line, sizeof(line), fp))
                 {
-                    printf("%d\t%s\n", id, name);
+                    if (sscanf(line, "%u %f %[^\n]", &id, &marks, name) == 3)
+                    {
+                        name[strcspn(name, "\r")] = '\0';
+
+                        printf("%u\t%s\t%.2f\n", id, name, marks);
+
+                        found = 1;
+                    }
                 }
+
+                if (!found)
+                    printf("No records found!\n");
 
                 fclose(fp);
 
                 break;
+
 
             case 3:
 
-                fp = fopen("data.txt", "r");
-
-                if (fp == NULL)
+                if (!fileHasRecords())
                 {
-                    printf("No record found!\n");
+                    printf("No records available to update!\n");
                     break;
                 }
 
+                fp = fopen("data.txt", "r");
                 temp = fopen("temp.txt", "w");
 
-                if (temp == NULL)
+                if (fp == NULL || temp == NULL)
                 {
-                    printf("Error creating temporary file!\n");
-                    fclose(fp);
+                    printf("Invalid\n");
+
+                    if (fp)
+                        fclose(fp);
+
+                    if (temp)
+                        fclose(temp);
+
                     break;
                 }
 
-                search = readInt("Enter ID to Update: ");
-
+                attempts = 0;
                 found = 0;
 
-                while (fscanf(fp, "%d %99[^\n]", &id, name) == 2)
+                while (attempts < MAX_ATTEMPTS)
                 {
-                    if (id == search)
+                    search = readUnsignedInt("Enter ID to Update: ");
+
+                    if (search == UINT_MAX)
                     {
-                        printf("Current name: %s\n", name);
+                        fclose(fp);
+                        fclose(temp);
 
-                        printf("Enter new name: ");
-                        readName(name, sizeof(name));
+                        remove("temp.txt");
 
-                        found = 1;
+                        break;
                     }
 
-                    fprintf(temp, "%d %s\n", id, name);
+                    rewind(fp);
+
+                    found = 0;
+
+                    while (fgets(line, sizeof(line), fp))
+                    {
+                        if (sscanf(line, "%u %f %[^\n]", &id, &marks, name) == 3)
+                        {
+                            if (id == search)
+                            {
+                                found = 1;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (found)
+                        break;
+
+                    attempts++;
+
+                    printf("Invalid\n");
                 }
 
-                fclose(fp);
-                fclose(temp);
+                if (!found)
+                {
+                    fclose(fp);
+                    fclose(temp);
+
+                    remove("temp.txt");
+
+                    printf("Returning to main menu...\n");
+
+                    break;
+                }
+
+                rewind(fp);
+
+                while (fgets(line, sizeof(line), fp))
+                {
+                    if (sscanf(line, "%u %f %[^\n]", &id, &marks, name) == 3)
+                    {
+                        if (id == search)
+                        {
+                            printf("Enter new name: ");
+
+                            if (!readName(name, sizeof(name)))
+                            {
+                                fclose(fp);
+                                fclose(temp);
+
+                                remove("temp.txt");
+
+                                found = 0;
+
+                                break;
+                            }
+
+                            marks = readMarks("Enter new marks: ");
+
+                            if (marks == -1)
+                            {
+                                fclose(fp);
+                                fclose(temp);
+
+                                remove("temp.txt");
+
+                                found = 0;
+
+                                break;
+                            }
+                        }
+
+                        fprintf(temp, "%u %.2f %s\n", id, marks, name);
+                    }
+                }
 
                 if (found)
                 {
-                    printf("Record updated successfully!\n");
+                    fclose(fp);
+                    fclose(temp);
+
+                    remove("data.txt");
+                    rename("temp.txt", "data.txt");
+
+                    printf("Record updated!\n");
                 }
-                else
-                {
-                    printf("ID not found! No record was updated.\n");
-                }
+
                 break;
+
 
             case 4:
 
-                fp = fopen("data.txt", "r");
-
-                if (fp == NULL)
+                if (!fileHasRecords())
                 {
-                    printf("No record found!\n");
+                    printf("No records available to delete!\n");
                     break;
                 }
 
+                fp = fopen("data.txt", "r");
                 temp = fopen("temp.txt", "w");
 
-                if (temp == NULL)
+                if (fp == NULL || temp == NULL)
                 {
-                    printf("Error creating temporary file!\n");
-                    fclose(fp);
+                    printf("Invalid\n");
+
+                    if (fp)
+                        fclose(fp);
+
+                    if (temp)
+                        fclose(temp);
+
                     break;
                 }
 
-                search = readInt("Enter ID to Delete: ");
-
+                attempts = 0;
                 found = 0;
 
-                while (fscanf(fp, "%d %99[^\n]", &id, name) == 2)
+                while (attempts < MAX_ATTEMPTS)
                 {
-                    if (id == search)
+                    search = readUnsignedInt("Enter ID to Delete: ");
+
+                    if (search == UINT_MAX)
                     {
-                        found = 1;
+                        fclose(fp);
+                        fclose(temp);
+
+                        remove("temp.txt");
+
+                        break;
                     }
-                    else
+
+                    rewind(fp);
+
+                    found = 0;
+
+                    while (fgets(line, sizeof(line), fp))
                     {
-                        fprintf(temp, "%d %s\n", id, name);
+                        if (sscanf(line, "%u %f %[^\n]", &id, &marks, name) == 3)
+                        {
+                            if (id == search)
+                            {
+                                found = 1;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (found)
+                        break;
+
+                    attempts++;
+
+                    printf("Invalid\n");
+                }
+
+                if (!found)
+                {
+                    fclose(fp);
+                    fclose(temp);
+
+                    remove("temp.txt");
+
+                    printf("Returning to main menu...\n");
+
+                    break;
+                }
+
+                rewind(fp);
+
+                while (fgets(line, sizeof(line), fp))
+                {
+                    if (sscanf(line, "%u %f %[^\n]", &id, &marks, name) == 3)
+                    {
+                        if (id != search)
+                        {
+                            fprintf(temp, "%u %.2f %s\n", id, marks, name);
+                        }
                     }
                 }
 
                 fclose(fp);
                 fclose(temp);
 
-                if (found)
-                {
-                    printf("Record deleted successfully!\n");
-                }
-                else
-                {
-                    printf("ID not found! No record was deleted.\n");
-                }
+                remove("data.txt");
+                rename("temp.txt", "data.txt");
+
+                printf("Record deleted!\n");
+
                 break;
 
+
             case 5:
-                printf("Thank you!\n");
-                exit(0);
+
+                printf("Exiting...\n");
+
+                return 0;
+
 
             default:
-                printf("Invalid choice! Please enter a number from 1 to 5.\n");
+
+                printf("Invalid choice!\n");
         }
     }
 

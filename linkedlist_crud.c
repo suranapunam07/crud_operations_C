@@ -1,11 +1,16 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
-struct Student
+#define MAX_ATTEMPTS 3
+
+
+struct Student 
 {
-    int Id;
+    unsigned long int Id;
     char Name[50];
     int Age;
     float Marks;
@@ -14,27 +19,25 @@ struct Student
 
 struct Student *head = NULL;
 
-int isValidName(char name[])
+int isValidName(char name[]) 
 {
-    int i;
-
     if (strlen(name) == 0)
         return 0;
 
-    for (i = 0; name[i] != '\0'; i++)
+    for (int i = 0; name[i] != '\0'; i++) 
     {
-        if (!isalpha(name[i]) && name[i] != ' ')
+        if (!isalpha((unsigned char)name[i]) && name[i] != ' ')
             return 0;
     }
 
     return 1;
 }
 
-int isIdExists(int id)
+int isIdExists(unsigned long int id) 
 {
     struct Student *temp = head;
 
-    while (temp != NULL)
+    while (temp != NULL) 
     {
         if (temp->Id == id)
             return 1;
@@ -45,112 +48,276 @@ int isIdExists(int id)
     return 0;
 }
 
-int getValidId()
+unsigned long int getValidId() 
 {
-    int id;
+    char input[50];
+    unsigned long int id;
+    int attempts = 0;
+    int i;
 
-    while (1)
+    while (attempts < MAX_ATTEMPTS) 
     {
-        printf("Enter the student Roll No: ");
+        printf("Enter ID: ");
+        gets(input);
 
-        if (scanf("%d", &id) != 1)
+        if (strlen(input) == 0) 
         {
-            printf("Invalid input! Roll No must be a number.\n");
-            while (getchar() != '\n');
+            printf("Invalid\n");
+            attempts++;
+            continue;
         }
-        else if (id <= 0)
+
+        id = 0;
+
+        for (i = 0; input[i] != '\0'; i++) 
         {
-            printf("Roll No must be greater than 0.\n");
+            if (!isdigit((unsigned char)input[i])) 
+            {
+                printf("Invalid\n");
+                break;
+            }
+
+            if (id > (ULONG_MAX - (input[i] - '0')) / 10) 
+            {
+                printf("Invalid\n");
+                break;
+            }
+
+            id = id * 10 + (input[i] - '0');
         }
-        else if (isIdExists(id))
+
+        if (input[i] != '\0') 
         {
-            printf("Roll No already exists!\n");
+            attempts++;
+            continue;
         }
-        else
+
+        if (id == 0 || isIdExists(id)) 
         {
-            return id;
+            printf("Invalid\n");
+            attempts++;
+            continue;
         }
+
+        return id;
     }
+
+    printf("Invalid\n");
+    return 0;
 }
 
-void getValidName(char name[])
+int getValidName(char name[]) 
 {
-    while (1)
+    int attempts = 0;
+
+    while (attempts < MAX_ATTEMPTS) 
     {
-        printf("Enter the student name: ");
-        scanf(" %[^\n]", name);
+        printf("Enter Name: ");
+
+        gets(name);
 
         if (isValidName(name))
-            return;
+            return 1;
 
-        printf("Invalid name! Use only alphabets and spaces.\n");
+        printf("Invalid\n");
+        attempts++;
     }
+
+    printf("Invalid\n");
+    return 0;
 }
 
-int getValidAge()
+int getValidAge() 
 {
     int age;
+    int attempts = 0;
+    char ch;
 
-    while (1)
+    while (attempts < MAX_ATTEMPTS) 
     {
-        printf("Enter the student age: ");
+        printf("Enter Age: ");
 
-        if (scanf("%d", &age) != 1)
+        if (scanf("%d", &age) != 1) 
         {
-            printf("Invalid input! Age must be a number.\n");
+            printf("Invalid\n");
             while (getchar() != '\n');
+
+            attempts++;
         }
-        else if (age < 1 || age > 100)
+        else 
         {
-            printf("Age must be between 1 and 100.\n");
-        }
-        else
-        {
-            return age;
+            ch = getchar();
+
+            if (ch != '\n') 
+            {
+                printf("Invalid\n");
+
+                while (getchar() != '\n');
+
+                attempts++;
+            }
+            else if (age < 1 || age > 100) 
+            {
+                printf("Invalid\n");
+                attempts++;
+            }
+            else 
+            {
+                return age;
+            }
         }
     }
+
+    printf("Invalid\n");
+    return -1;
 }
 
-float getValidMarks()
+float getValidMarks() 
 {
     float marks;
+    int attempts = 0;
+    char ch;
 
-    while (1)
+    while (attempts < MAX_ATTEMPTS) 
     {
-        printf("Enter the student's marks: ");
+        printf("Enter Marks: ");
 
-        if (scanf("%f", &marks) != 1)
+        if (scanf("%f", &marks) != 1) 
         {
-            printf("Invalid input! Marks must be a number.\n");
+            printf("Invalid\n");
+
             while (getchar() != '\n');
+
+            attempts++;
         }
-        else if (marks < 0 || marks > 100)
+        else 
         {
-            printf("Marks must be between 0 and 100.\n");
-        }
-        else
-        {
-            return marks;
+            ch = getchar();
+
+            if (ch != '\n') 
+            {
+                printf("Invalid\n");
+
+                while (getchar() != '\n');
+
+                attempts++;
+            }
+            else if (marks < 0 || marks > 100) 
+            {
+                printf("Invalid\n");
+                attempts++;
+            }
+            else 
+            {
+                return marks;
+            }
         }
     }
+
+    printf("Invalid\n");
+    return -1;
 }
 
-void CreateStudent()
+unsigned long int getSearchId(char message[]) 
+{
+    char input[50];
+    unsigned long int id;
+    int attempts = 0;
+    int i;
+
+    while (attempts < MAX_ATTEMPTS) 
+    {
+        printf("%s", message);
+
+        gets(input);
+
+        if (strlen(input) == 0) 
+        {
+            printf("Invalid\n");
+            attempts++;
+            continue;
+        }
+
+        id = 0;
+
+        for (i = 0; input[i] != '\0'; i++) 
+        {
+            if (!isdigit((unsigned char)input[i])) 
+            {
+                printf("Invalid\n");
+                break;
+            }
+
+            if (id > (ULONG_MAX - (input[i] - '0')) / 10) 
+            {
+                printf("Invalid\n");
+                break;
+            }
+
+            id = id * 10 + (input[i] - '0');
+        }
+
+        if (input[i] != '\0') 
+        {
+            attempts++;
+            continue;
+        }
+
+        if (id == 0) 
+        {
+            printf("Invalid\n");
+            attempts++;
+            continue;
+        }
+
+        return id;
+    }
+
+    printf("Invalid\n");
+    return 0;
+}
+
+void CreateStudent() 
 {
     struct Student *newNode;
 
     newNode = (struct Student *)malloc(sizeof(struct Student));
 
-    if (newNode == NULL)
+    if (newNode == NULL) 
     {
-        printf("\nMemory allocation failed!\n");
+        printf("Invalid\n");
         return;
     }
 
     newNode->Id = getValidId();
-    getValidName(newNode->Name);
+
+    if (newNode->Id == 0) 
+    {
+        free(newNode);
+        return;
+    }
+
+    if (!getValidName(newNode->Name)) 
+    {
+        free(newNode);
+        return;
+    }
+
     newNode->Age = getValidAge();
+
+    if (newNode->Age == -1) 
+    {
+        free(newNode);
+        return;
+    }
+
     newNode->Marks = getValidMarks();
+
+    if (newNode->Marks == -1) 
+    {
+        free(newNode);
+        return;
+    }
 
     newNode->next = NULL;
 
@@ -158,147 +325,118 @@ void CreateStudent()
     {
         head = newNode;
     }
-    else
+    else 
     {
         struct Student *temp = head;
 
         while (temp->next != NULL)
-        {
             temp = temp->next;
-        }
 
         temp->next = newNode;
     }
 
-    printf("\nStudent added successfully!\n");
+    printf("Added!\n");
 }
 
-void ReadStudent()
+void ReadStudent() 
 {
-    struct Student *temp;
+    struct Student *temp = head;
 
-    if (head == NULL)
+    if (head == NULL) 
     {
-        printf("\nLinked List is Empty!\n");
+        printf("Invalid\n");
         return;
     }
 
-    temp = head;
+    printf("\nSTUDENT RECORDS\n");
 
-    printf("\n========== STUDENT RECORDS ==========\n");
-
-    while (temp != NULL)
+    while (temp != NULL) 
     {
-        printf("\nStudent Roll No : %d", temp->Id);
-        printf("\nStudent Name    : %s", temp->Name);
-        printf("\nStudent Age     : %d", temp->Age);
-        printf("\nStudent Marks   : %.2f", temp->Marks);
-        printf("\n-------------------------------------\n");
+        printf("\nID      : %lu", temp->Id);
+        printf("\nName    : %s", temp->Name);
+        printf("\nAge     : %d", temp->Age);
+        printf("\nMarks   : %.2f\n", temp->Marks);
 
         temp = temp->next;
     }
 }
 
-void updateStudent()
+void updateStudent() 
 {
-    int id;
-    int found = 0;
+    unsigned long int id;
+    struct Student *temp;
 
-    struct Student *temp = head;
-
-    if (head == NULL)
+    if (head == NULL) 
     {
-        printf("\nLinked List is Empty!\n");
+        printf("Invalid\n");
         return;
     }
 
-    printf("\nEnter the Roll No to update: ");
+    id = getSearchId("Enter ID to update: ");
 
-    if (scanf("%d", &id) != 1)
-    {
-        printf("Invalid Roll No!\n");
-        while (getchar() != '\n');
+    if (id == 0)
         return;
-    }
 
-    if (id <= 0)
-    {
-        printf("Roll No must be greater than 0.\n");
-        return;
-    }
+    temp = head;
 
-    while (temp != NULL)
+    while (temp != NULL) 
     {
-        if (temp->Id == id)
+        if (temp->Id == id) 
         {
-            getValidName(temp->Name);
+            if (!getValidName(temp->Name))
+                return;
+
             temp->Age = getValidAge();
+
+            if (temp->Age == -1)
+                return;
+
             temp->Marks = getValidMarks();
 
-            found = 1;
+            if (temp->Marks == -1)
+                return;
 
-            printf("\nStudent record updated successfully!\n");
-            break;
+            printf("Updated!\n");
+            return;
         }
 
         temp = temp->next;
     }
 
-    if (found == 0)
-    {
-        printf("\nStudent not found!\n");
-    }
+    printf("Invalid\n");
 }
 
-void deleteStudent()
+void deleteStudent() 
 {
-    int id;
-
+    unsigned long int id;
     struct Student *temp;
-    struct Student *prev;
+    struct Student *prev = NULL;
 
-    if (head == NULL)
+    if (head == NULL) 
     {
-        printf("\nLinked List is Empty!\n");
+        printf("Invalid\n");
         return;
     }
 
-    printf("\nEnter the Roll No to delete: ");
+    id = getSearchId("Enter ID to delete: ");
 
-    if (scanf("%d", &id) != 1)
-    {
-        printf("Invalid Roll No!\n");
-        while (getchar() != '\n');
+    if (id == 0)
         return;
-    }
 
-    if (id <= 0)
+    temp = head;
+
+    while (temp != NULL) 
     {
-        printf("Roll No must be greater than 0.\n");
-        return;
-    }
-
-    if (head->Id == id)
-    {
-        temp = head;
-        head = head->next;
-        free(temp);
-
-        printf("\nRecord Deleted Successfully!\n");
-        return;
-    }
-
-    prev = head;
-    temp = head->next;
-
-    while (temp != NULL)
-    {
-        if (temp->Id == id)
+        if (temp->Id == id) 
         {
-            prev->next = temp->next;
+            if (prev == NULL)
+                head = temp->next;
+            else
+                prev->next = temp->next;
+
             free(temp);
 
-            printf("\nRecord Deleted Successfully!\n");
+            printf("Deleted!\n");
             return;
         }
 
@@ -306,34 +444,69 @@ void deleteStudent()
         temp = temp->next;
     }
 
-    printf("\nStudent not found!\n");
+    printf("Invalid\n");
 }
 
-int main()
+int main() 
 {
     int choice;
+    int attempts;
+    char ch;
 
-    while (1)
+    while (1) 
     {
-        printf("\n");
-        printf("\n========== STUDENT MANAGEMENT ==========\n");
+        printf("\nSTUDENT MANAGEMENT\n");
+        printf("1. Create\n");
+        printf("2. Read\n");
+        printf("3. Update\n");
+        printf("4. Delete\n");
+        printf("5. Exit\n");
 
-        printf("\n1. Create");
-        printf("\n2. Read");
-        printf("\n3. Update");
-        printf("\n4. Delete");
-        printf("\n5. Exit");
+        attempts = 0;
 
-        printf("\n\nEnter choice: ");
-
-        if (scanf("%d", &choice) != 1)
+        while (attempts < MAX_ATTEMPTS) 
         {
-            printf("\nInvalid input! Please enter a number.\n");
-            while (getchar() != '\n');
+            printf("Enter choice: ");
+
+            if (scanf("%d", &choice) != 1) 
+            {
+                printf("Invalid\n");
+
+                while (getchar() != '\n');
+
+                attempts++;
+            }
+            else 
+            {
+                ch = getchar();
+
+                if (ch != '\n') 
+                {
+                    printf("Invalid\n");
+
+                    while (getchar() != '\n');
+
+                    attempts++;
+                }
+                else if (choice < 1 || choice > 5) 
+                {
+                    printf("Invalid\n");
+                    attempts++;
+                }
+                else 
+                {
+                    break;
+                }
+            }
+        }
+
+        if (attempts == MAX_ATTEMPTS) 
+        {
+            printf("Invalid\n");
             continue;
         }
 
-        switch (choice)
+        switch (choice) 
         {
             case 1:
                 CreateStudent();
@@ -352,13 +525,8 @@ int main()
                 break;
 
             case 5:
-                printf("\nProgram exited.\n");
                 return 0;
-
-            default:
-                printf("\nInvalid choice! Please enter 1-5.\n");
         }
     }
-
-    return 0;
 }
+

@@ -3,8 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-struct Student
-{
+struct Student {
     int id;
     char name[50];
     float marks;
@@ -13,318 +12,154 @@ struct Student
 
 struct Student *top = NULL;
 
-int readInt(char message[])
-{
-    char input[100];
-    char extra;
+int readInt(char message[]) {
+    char input[100], extra;
     int value;
-
-    while (1)
-    {
+    while (1) {
         printf("%s", message);
-
-        if (fgets(input, sizeof(input), stdin) == NULL)
-        {
-            exit(0);
-        }
-
-        if (sscanf(input, "%d %c", &value, &extra) == 1)
-        {
-            return value;
-        }
-
-        printf("Invalid input! Please enter a number.\n");
+        if (fgets(input, sizeof(input), stdin) == NULL) exit(0);
+        if (sscanf(input, "%d %c", &value, &extra) == 1) return value;
+        printf("Invalid\n");
     }
 }
 
-float readFloat(char message[])
-{
-    char input[100];
-    char extra;
+float readFloat(char message[]) {
+    char input[100], extra;
     float value;
-
-    while (1)
-    {
+    while (1) {
         printf("%s", message);
-
-        if (fgets(input, sizeof(input), stdin) == NULL)
-        {
-            exit(0);
-        }
-
-        if (sscanf(input, "%f %c", &value, &extra) == 1)
-        {
-            return value;
-        }
-
-        printf("Invalid input! Please enter a valid number.\n");
+        if (fgets(input, sizeof(input), stdin) == NULL) exit(0);
+        if (sscanf(input, "%f %c", &value, &extra) == 1) return value;
+        printf("Invalid\n");
     }
 }
 
-int validName(char name[])
-{
-    int i;
-
-    if (strlen(name) == 0)
-    {
-        return 0;
+int validName(char name[]) {
+    if (strlen(name) == 0) return 0;
+    for (int i = 0; name[i] != '\0'; i++) {
+        if (!isalpha((unsigned char)name[i]) && name[i] != ' ') return 0;
     }
-
-    for (i = 0; name[i] != '\0'; i++)
-    {
-        if (!isalpha((unsigned char)name[i]) && name[i] != ' ')
-        {
-            return 0;
-        }
-    }
-
     return 1;
 }
 
-void readName(char name[], int size)
-{
-    while (1)
-    {
-        if (fgets(name, size, stdin) == NULL)
-        {
-            exit(0);
-        }
-
+void readName(char name[], int size) {
+    while (1) {
+        if (fgets(name, size, stdin) == NULL) exit(0);
         name[strcspn(name, "\n")] = '\0';
-
-        if (validName(name))
-        {
-            return;
-        }
-
-        printf("Invalid name! Name should contain only alphabets and spaces.\n");
-        printf("Enter name again: ");
+        if (validName(name)) return;
+        printf("Invalid\n");
     }
 }
 
-int idExists(int searchID)
-{
+int idExists(int searchID) {
     struct Student *temp = top;
-
-    while (temp != NULL)
-    {
-        if (temp->id == searchID)
-        {
-            return 1;
-        }
-
+    while (temp != NULL) {
+        if (temp->id == searchID) return 1;
         temp = temp->next;
     }
-
     return 0;
 }
 
-int readID()
-{
+int readID() {
     int id;
-
-    while (1)
-    {
+    while (1) {
         id = readInt("Enter Student ID: ");
-
-        if (id <= 0)
-        {
-            printf("ID must be greater than 0!\n");
-        }
-        else if (idExists(id))
-        {
-            printf("ID already exists! Enter a different ID.\n");
-        }
-        else
-        {
+        if (id <= 0) {
+            printf("Invalid\n");
+        } else if (idExists(id)) {
+            printf("Invalid\n");
+        } else {
             return id;
         }
     }
 }
 
-float readMarks()
-{
+float readMarks() {
     float marks;
-
-    while (1)
-    {
+    while (1) {
         marks = readFloat("Enter Student Marks: ");
-
-        if (marks < 0 || marks > 100)
-        {
-            printf("Invalid marks! Marks must be between 0 and 100.\n");
-        }
-        else
-        {
+        if (marks < 0 || marks > 100) {
+            printf("Invalid\n");
+        } else {
             return marks;
         }
     }
 }
 
-void push()
-{
-    struct Student *newNode;
-
-    newNode = (struct Student *)malloc(sizeof(struct Student));
-
-    if (newNode == NULL)
-    {
-        printf("Unable to allocate memory!\n");
+void push() {
+    struct Student *newNode = (struct Student *)malloc(sizeof(struct Student));
+    if (newNode == NULL) {
+        printf("Invalid\n");
         return;
     }
-
     newNode->id = readID();
-
     printf("Enter Student Name: ");
     readName(newNode->name, sizeof(newNode->name));
-
     newNode->marks = readMarks();
-
     newNode->next = top;
-
     top = newNode;
-
-    printf("\nStudent added successfully!\n");
+    printf("Added\n");
 }
 
-void display()
-{
-    struct Student *temp;
-
-    if (top == NULL)
-    {
-        printf("\nStack is empty!\n");
+void display() {
+    if (top == NULL) {
+        printf("Invalid\n");
         return;
     }
-
-    temp = top;
-
-    printf("\n*** STUDENT STACK ***\n");
-
-    while (temp != NULL)
-    {
-        printf("ID: %d | Name: %s | Marks: %.2f\n",
-               temp->id,
-               temp->name,
-               temp->marks);
-
+    struct Student *temp = top;
+    while (temp != NULL) {
+        printf("ID: %d | Name: %s | Marks: %.2f\n", temp->id, temp->name, temp->marks);
         temp = temp->next;
     }
-
-    printf("\nStudents stack displayed successfully!\n");
 }
 
-void pop()
-{
-    struct Student *temp;
-
-    if (top == NULL)
-    {
-        printf("\nStack is empty!\n");
+void pop() {
+    if (top == NULL) {
+        printf("Invalid\n");
         return;
     }
-
-    temp = top;
-
-    printf("\nDeleted Student:\n");
-    printf("ID: %d\n", temp->id);
-    printf("Name: %s\n", temp->name);
-    printf("Marks: %.2f\n", temp->marks);
-
+    struct Student *temp = top;
+    printf("Deleted: ID: %d | Name: %s | Marks: %.2f\n", temp->id, temp->name, temp->marks);
     top = top->next;
-
     free(temp);
-
-    printf("\nStudent deleted successfully!\n");
 }
 
-void updateStudent()
-{
-    int id;
-    struct Student *temp;
-
-    if (top == NULL)
-    {
-        printf("\nStack is empty!\n");
+void updateStudent() {
+    if (top == NULL) {
+        printf("Invalid\n");
         return;
     }
-
-    id = readInt("Enter the ID of the student to update: ");
-
-    if (id <= 0)
-    {
-        printf("Invalid ID! ID must be greater than 0.\n");
+    int id = readInt("Enter ID to update: ");
+    if (id <= 0) {
+        printf("Invalid\n");
         return;
     }
-
-    temp = top;
-
-    while (temp != NULL)
-    {
-        if (temp->id == id)
-        {
-            printf("\nStudent found!\n");
-            printf("Current Name: %s\n", temp->name);
-            printf("Current Marks: %.2f\n", temp->marks);
-
-            printf("\nEnter new name: ");
+    struct Student *temp = top;
+    while (temp != NULL) {
+        if (temp->id == id) {
+            printf("Enter new name: ");
             readName(temp->name, sizeof(temp->name));
-
             temp->marks = readMarks();
-
-            printf("\nStudent updated successfully!\n");
-
+            printf("Updated\n");
             return;
         }
-
         temp = temp->next;
     }
-
-    printf("\nStudent not found!\n");
+    printf("Invalid\n");
 }
 
-int main()
-{
+int main() {
     int choice;
-
-    while (1)
-    {
-        printf("\n\n------ STUDENT STACK CRUD ------\n");
-
-        printf("1. Create Student\n");
-        printf("2. Read Stack\n");
-        printf("3. Delete Student\n");
-        printf("4. Update Student\n");
-        printf("5. Exit\n");
-
+    while (1) {
+        printf("\n1. Create\n2. Read\n3. Delete\n4. Update\n5. Exit\n");
         choice = readInt("Enter choice: ");
-
-        switch (choice)
-        {
-            case 1:
-                push();
-                break;
-
-            case 2:
-                display();
-                break;
-
-            case 3:
-                pop();
-                break;
-
-            case 4:
-                updateStudent();
-                break;
-
-            case 5:
-                printf("\nProgram exited.\n");
-                return 0;
-
-            default:
-                printf("Invalid choice! Please enter a number from 1 to 5.\n");
+        switch (choice) {
+            case 1: push(); break;
+            case 2: display(); break;
+            case 3: pop(); break;
+            case 4: updateStudent(); break;
+            case 5: return 0;
+            default: printf("Invalid\n");
         }
     }
-
-    return 0;
 }
