@@ -7,6 +7,7 @@
 
 #define MAX_ATTEMPTS 3
 
+
 struct Student {
     unsigned int id;
     char name[50];
@@ -16,20 +17,20 @@ struct Student {
 };
 
 int isValidName(char name[]) {
-    int hasLetter = 0;
 
     if (strlen(name) == 0)
         return 0;
 
     for (int i = 0; name[i] != '\0'; i++) {
         if (isalpha((unsigned char)name[i])) {
-            hasLetter = 1;
+            //hasLetter = 1;
+            return 1;
         } else if (name[i] != ' ') {
             return 0;
         }
     }
-
-    return hasLetter;
+    return 1;
+    //return hasLetter;
 }
 
 struct Student *search(struct Student *root, unsigned int id) {
@@ -60,7 +61,7 @@ struct Student *search(struct Student *root, unsigned int id) {
 
 unsigned int getValidId(struct Student *root) {
     char input[100], extra;
-    unsigned long long value;
+    unsigned long value;
     int attempts = 0;
 
     while (attempts < MAX_ATTEMPTS) {
@@ -78,7 +79,7 @@ unsigned int getValidId(struct Student *root) {
             continue;
         }
 
-        if (sscanf(input, "%llu %c", &value, &extra) != 1) {
+        if (sscanf(input, "%lu %c", &value, &extra) != 1) {
             printf("Invalid\n");
             attempts++;
             continue;
@@ -123,7 +124,7 @@ int getExistingId(struct Student *root, unsigned int *id) {
             continue;
         }
 
-        if (sscanf(input, "%llu %c", &value, &extra) != 1) {
+        if (sscanf(input, "%lu %c", &value, &extra) != 1) {
             printf("Invalid\n");
             attempts++;
             continue;
@@ -215,7 +216,12 @@ float getValidMarks() {
     return -1;
 }
 
-struct Student *createNode(unsigned int id, char name[], float marks) {
+struct Student *createNode(
+    unsigned int id,
+    char name[], 
+    float marks
+) 
+{
     struct Student *newNode;
 
     newNode = (struct Student *)malloc(sizeof(struct Student));
@@ -232,7 +238,13 @@ struct Student *createNode(unsigned int id, char name[], float marks) {
     return newNode;
 }
 
-struct Student *insert(struct Student *root, unsigned int id, char name[], float marks) {
+struct Student *insert(
+    struct Student *root, 
+    unsigned int id, 
+    char name[], 
+    float marks
+) 
+{
     struct Student *queue[100];
     int front = 0, rear = 0;
     struct Student *temp;
@@ -353,9 +365,10 @@ void updateStudent(struct Student *root) {
     printf("Updated!\n");
 }
 
-void deleteDeepest(struct Student *root, struct Student *deepest) {
+void deleteDeepest(struct Student *root, struct Student *leave) {
     struct Student *queue[100];
-    int front = 0, rear = 0;
+    int front = 0;
+    int rear = 0;
     struct Student *temp;
 
     if (root == NULL)
@@ -365,19 +378,17 @@ void deleteDeepest(struct Student *root, struct Student *deepest) {
 
     while (front < rear) {
         temp = queue[front++];
-
         if (temp->left != NULL) {
-            if (temp->left == deepest) {
+            if (temp->left == leave) {
                 free(temp->left);
                 temp->left = NULL;
                 return;
             }
-
             queue[rear++] = temp->left;
         }
 
         if (temp->right != NULL) {
-            if (temp->right == deepest) {
+            if (temp->right == leave) {
                 free(temp->right);
                 temp->right = NULL;
                 return;
