@@ -1,524 +1,919 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <limits.h>
-#include <math.h>
-
 #define MAX_ATTEMPTS 3
 
-
-struct Student {
-    unsigned int id;
-    char name[50];
-    float marks;
-    struct Student *left;
-    struct Student *right;
+//structure for one tree node.
+struct tree
+{
+    int data;
+    struct tree *left;//left child pointer
+    struct tree *right;//right child pointer
+};
+//separate structure for the queue.
+struct queue
+{
+    struct tree *items[100];
+    int front;  //Keeps track of the next node to remove.
+    int rear;   //Keeps track of where the next node will be inserted.
 };
 
-int isValidName(char name[]) {
-
-    if (strlen(name) == 0)
-        return 0;
-
-    for (int i = 0; name[i] != '\0'; i++) {
-        if (isalpha((unsigned char)name[i])) {
-            //hasLetter = 1;
-            return 1;
-        } else if (name[i] != ' ') {
-            return 0;
-        }
-    }
-    return 1;
-    //return hasLetter;
-}
-
-struct Student *search(struct Student *root, unsigned int id) {
-    struct Student *queue[100];
-    int front = 0, rear = 0;
-    struct Student *temp;
-
-    if (root == NULL)
-        return NULL;
-
-    queue[rear++] = root;
-
-    while (front < rear) {
-        temp = queue[front++];
-
-        if (temp->id == id)
-            return temp;
-
-        if (temp->left != NULL)
-            queue[rear++] = temp->left;
-
-        if (temp->right != NULL)
-            queue[rear++] = temp->right;
-    }
-
-    return NULL;
-}
-
-unsigned int getValidId(struct Student *root) {
-    char input[100], extra;
-    unsigned long value;
-    int attempts = 0;
-
-    while (attempts < MAX_ATTEMPTS) {
-        printf("Enter Student ID: ");
-
-        if (fgets(input, sizeof(input), stdin) == NULL) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (input[0] == '-') {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (sscanf(input, "%lu %c", &value, &extra) != 1) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (value == 0 || value > UINT_MAX) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (root != NULL && search(root, (unsigned int)value) != NULL) {
-            printf("Invalid (duplicate ID)\n");
-            attempts++;
-            continue;
-        }
-
-        return (unsigned int)value;
-    }
-
-    printf("Invalid\n");
-    return (unsigned int)-1;
-}
-
-int getExistingId(struct Student *root, unsigned int *id) {
-    char input[100], extra;
-    unsigned long long value;
-    int attempts = 0;
-
-    while (attempts < MAX_ATTEMPTS) {
-        printf("Enter Student ID: ");
-
-        if (fgets(input, sizeof(input), stdin) == NULL) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (input[0] == '-') {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (sscanf(input, "%lu %c", &value, &extra) != 1) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (value == 0 || value > UINT_MAX) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        *id = (unsigned int)value;
-
-        if (search(root, *id) == NULL) {
-            printf("Invalid (ID not found)\n");
-            attempts++;
-            continue;
-        }
-
-        return 1;
-    }
-
-    printf("Invalid\n");
-    return 0;
-}
-
-int getValidName(char name[]) {
-    int attempts = 0;
-    int length;
-    int ch;
-
-    while (attempts < MAX_ATTEMPTS) {
-        printf("Enter Student Name: ");
-
-        if (fgets(name, 50, stdin) == NULL) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        length = strlen(name);
-
-        if (length > 0 && name[length - 1] == '\n') {
-            name[length - 1] = '\0';
-        } else {
-            while ((ch = getchar()) != '\n' && ch != EOF) {
-            }
-
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (isValidName(name))
-            return 1;
-
-        printf("Invalid\n");
-        attempts++;
-    }
-
-    printf("Invalid\n");
-    return 0;
-}
-
-float getValidMarks() {
-    char input[100], extra;
-    float marks;
-    int attempts = 0;
-
-    while (attempts < MAX_ATTEMPTS) {
-        printf("Enter Student Marks: ");
-
-        if (fgets(input, sizeof(input), stdin) == NULL) {
-            printf("Invalid\n");
-            attempts++;
-            continue;
-        }
-
-        if (sscanf(input, "%f %c", &marks, &extra) == 1) {
-            if (isfinite(marks) && marks >= 0 && marks <= 100)
-                return marks;
-        }
-
-        printf("Invalid\n");
-        attempts++;
-    }
-
-    printf("Invalid\n");
-    return -1;
-}
-
-struct Student *createNode(
-    unsigned int id,
-    char name[], 
-    float marks
-) 
+//separate structure for the stack.
+struct stack
 {
-    struct Student *newNode;
+    struct tree *items[100];
+    int top;  //Keeps track of the top of the stack.
+};
 
-    newNode = (struct Student *)malloc(sizeof(struct Student));
+struct tree *root = NULL; //address of root node of the tree.
+
+void init_queue(struct queue *q)  //initiallize queue
+{
+    q->front = 0;
+    q->rear = 0;
+}
+
+void enqueue(struct queue *q, struct tree *node)
+{
+    if (q->rear < 100)
+    {
+        q->items[q->rear] = node;
+        q->rear++;
+    }
+}
+
+struct tree *dequeue(struct queue *q)
+{
+    struct tree *node;
+    if (q->front >= q->rear) //If front has reached rear, there is nothing to remove.
+        return NULL; 
+    node = q->items[q->front];
+    q->front++;
+
+    return node;
+}
+
+int queue_is_empty(struct queue *q)
+{
+    if (q->front >= q->rear)
+        return 1;
+    return 0;
+}
+
+void init_stack(struct stack *s)
+{
+    s->top = -1;
+}
+
+void push(struct stack *s, struct tree *node)  //push() adds a node to the top of the stack.
+{
+    if (s->top < 99)
+    {
+        s->top++;
+        s->items[s->top] = node;
+    }
+}
+
+struct tree *pop(struct stack *s)  //pop() removes and returns the top node from the stack
+{
+    if (s->top == -1)
+        return NULL;
+    return s->items[s->top--];
+}
+
+struct tree *peek(struct stack *s) //for postorder trsversal to check the child of the node.
+{
+    if (s->top == -1)
+        return NULL;
+    return s->items[s->top];
+}
+
+int stack_is_empty(struct stack *s)  //to know whether there is anything left.
+{
+    if (s->top == -1)
+        return 1;
+    return 0;
+}
+
+int isValueExists(int value)
+{
+    struct queue q;
+    if (root == NULL)
+        return 0;
+    init_queue(&q);
+    enqueue(&q, root);
+    while (!queue_is_empty(&q))
+    {
+        struct tree *temp = dequeue(&q);
+        if (temp->data == value)
+            return 1;
+        if (temp->left != NULL)
+            enqueue(&q, temp->left);
+        if (temp->right != NULL)
+            enqueue(&q, temp->right);
+    }
+    return 0;
+}
+
+int getValidValue(int *valid)
+{
+    int value;
+    int attempts = 0;
+    char ch;
+
+    while (attempts < MAX_ATTEMPTS)
+    {
+        printf("Enter value: ");
+        if (scanf("%d", &value) != 1)
+        {
+            printf("Invalid\n");
+            while (getchar() != '\n');
+            attempts++;
+        }
+        else
+        {
+            ch = getchar();
+            if (ch != '\n')
+            {
+                printf("Invalid\n");
+                while (getchar() != '\n');
+                attempts++;
+            }
+            else if (isValueExists(value))
+            {
+                printf("Invalid\n");
+                attempts++;
+            }
+            else
+            {
+                *valid = 1;
+                return value;
+            }
+        }
+    }
+    printf("Invalid\n");
+    *valid = 0;
+    return 0;
+}
+
+int getSearchValue(int *valid)
+{
+    int value;
+    int attempts = 0;
+    char ch;
+
+    while (attempts < MAX_ATTEMPTS)
+    {
+        printf("Enter value to search: ");
+
+        if (scanf("%d", &value) != 1)
+        {
+            printf("Invalid\n");
+
+            while (getchar() != '\n');
+
+            attempts++;
+        }
+        else
+        {
+            ch = getchar();
+
+            if (ch != '\n')
+            {
+                printf("Invalid\n");
+
+                while (getchar() != '\n');
+
+                attempts++;
+            }
+            else
+            {
+                *valid = 1;
+                return value;
+            }
+        }
+    }
+
+    printf("Invalid\n");
+    *valid = 0;
+    return 0;
+}
+
+
+
+//create
+
+struct tree *create_node()
+{
+    int value;
+    int valid;
+    struct tree *newNode;
+
+    value = getValidValue(&valid);
+
+    if (valid == 0)
+        return root;
+
+    newNode = (struct tree *)malloc(sizeof(struct tree));
 
     if (newNode == NULL)
-        return NULL;
+    {
+        printf("Memory allocation failed.\n");
+        return root;
+    }
 
-    newNode->id = id;
-    strcpy(newNode->name, name);
-    newNode->marks = marks;
+    newNode->data = value;
     newNode->left = NULL;
     newNode->right = NULL;
 
-    return newNode;
-}
-
-struct Student *insert(
-    struct Student *root, 
-    unsigned int id, 
-    char name[], 
-    float marks
-) 
-{
-    struct Student *queue[100];
-    int front = 0, rear = 0;
-    struct Student *temp;
-    struct Student *newNode;
-
-    newNode = createNode(id, name, marks);
-
-    if (newNode == NULL)
-        return NULL;
-
     if (root == NULL)
-        return newNode;
+    {
+        root = newNode;
+        printf("Node inserted successfully.\n");
+        return root;
+    }
 
-    queue[rear++] = root;
+    struct queue q;
+    init_queue(&q);
 
-    while (front < rear) {
-        temp = queue[front++];
+    enqueue(&q, root);
 
-        if (temp->left == NULL) {
+    while (!queue_is_empty(&q))
+    {
+        struct tree *temp = dequeue(&q);
+
+        if (temp->left == NULL)
+        {
             temp->left = newNode;
+            printf("Node inserted successfully.\n");
             return root;
-        } else {
-            queue[rear++] = temp->left;
+        }
+        else
+        {
+            enqueue(&q, temp->left);
         }
 
-        if (temp->right == NULL) {
+        if (temp->right == NULL)
+        {
             temp->right = newNode;
+            printf("Node inserted successfully.\n");
             return root;
-        } else {
-            queue[rear++] = temp->right;
+        }
+        else
+        {
+            enqueue(&q, temp->right);
         }
     }
 
-    free(newNode);
     return root;
 }
 
-void inorder(struct Student *root) {
-    if (root != NULL) {
-        inorder(root->left);
 
-        printf("ID: %u | Name: %s | Marks: %.2f\n",
-               root->id,
-               root->name,
-               root->marks);
 
-        inorder(root->right);
-    }
+//recursive
+
+//preorder Node.Left.Right
+
+void recursive_preorder(struct tree *node)
+{
+    if (node == NULL)
+        return;
+
+    printf("%d ", node->data);
+
+    recursive_preorder(node->left);
+    recursive_preorder(node->right);
 }
 
-void createStudent(struct Student **root) {
-    unsigned int id;
-    char name[50];
-    float marks;
-    struct Student *newRoot;
-
-    id = getValidId(*root);
-
-    if (id == (unsigned int)-1)
+//inorder Left.Node.Right
+void recursive_inorder(struct tree *node)
+{
+    if (node == NULL)
         return;
 
-    if (!getValidName(name))
-        return;
+    recursive_inorder(node->left);
 
-    marks = getValidMarks();
+    printf("%d ", node->data);
 
-    if (marks == -1)
-        return;
-
-    newRoot = insert(*root, id, name, marks);
-
-    if (newRoot == NULL) {
-        printf("Invalid\n");
-        return;
-    }
-
-    *root = newRoot;
-
-    printf("Added!\n");
+    recursive_inorder(node->right);
 }
 
-void readStudents(struct Student *root) {
-    if (root == NULL) {
-        printf("Invalid\n");
+//postorder Left.Right.Node
+void recursive_postorder(struct tree *node)
+{
+    if (node == NULL)
         return;
-    }
 
-    inorder(root);
+    recursive_postorder(node->left);
+    recursive_postorder(node->right);
+
+    printf("%d ", node->data);
 }
 
-void updateStudent(struct Student *root) {
-    unsigned int id;
-    struct Student *temp;
-    char name[50];
-    float marks;
-
-    if (root == NULL) {
-        printf("Invalid\n");
-        return;
-    }
-
-    if (!getExistingId(root, &id))
-        return;
-
-    temp = search(root, id);
-
-    if (!getValidName(name))
-        return;
-
-    marks = getValidMarks();
-
-    if (marks == -1)
-        return;
-
-    strcpy(temp->name, name);
-    temp->marks = marks;
-
-    printf("Updated!\n");
-}
-
-void deleteDeepest(struct Student *root, struct Student *leave) {
-    struct Student *queue[100];
-    int front = 0;
-    int rear = 0;
-    struct Student *temp;
+//iterative
+//preorder Node.Left.Right
+void iterative_preorder(struct tree *root)
+{
+    struct stack s;
 
     if (root == NULL)
         return;
 
-    queue[rear++] = root;
+    init_stack(&s);
 
-    while (front < rear) {
-        temp = queue[front++];
-        if (temp->left != NULL) {
-            if (temp->left == leave) {
-                free(temp->left);
-                temp->left = NULL;
-                return;
-            }
-            queue[rear++] = temp->left;
+    push(&s, root);
+
+    while (!stack_is_empty(&s))
+    {
+        struct tree *node = pop(&s);
+
+        printf("%d ", node->data);
+
+        if (node->right != NULL)
+            push(&s, node->right);
+
+        if (node->left != NULL)
+            push(&s, node->left);
+    }
+}
+
+//inorder Left.Node.Right
+void iterative_inorder(struct tree *root)
+{
+    struct stack s;
+    struct tree *node = root;
+
+    init_stack(&s);
+
+    while (node != NULL || !stack_is_empty(&s))
+    {
+        while (node != NULL)
+        {
+            push(&s, node);
+            node = node->left;
         }
 
-        if (temp->right != NULL) {
-            if (temp->right == leave) {
-                free(temp->right);
-                temp->right = NULL;
-                return;
-            }
+        node = pop(&s);
 
-            queue[rear++] = temp->right;
+        printf("%d ", node->data);
+
+        node = node->right;
+    }
+}
+
+//postorder Left.Right.Node
+void iterative_postorder(struct tree *root)
+{
+    struct stack s;
+    struct tree *node = root;
+    struct tree *previous = NULL;
+    init_stack(&s);
+    while (node != NULL || !stack_is_empty(&s))
+    {
+        while (node != NULL)
+        {
+            push(&s, node);
+            node = node->left;
+        }
+
+        node = peek(&s);
+        if (node->right != NULL && node->right != previous)
+        {
+            node = node->right;
+        }
+        else
+        {
+            printf("%d ", node->data);
+            previous = node;
+            pop(&s);
+            node = NULL;
         }
     }
 }
 
-struct Student *getDeepestNode(struct Student *root) {
-    struct Student *queue[100];
-    int front = 0, rear = 0;
-    struct Student *temp = NULL;
+//normal order level by level
+void normal_order(struct tree *root)
+{
+    struct queue q;
+    if (root == NULL)
+    {
+        printf("Tree is empty.\n");
+        return;
+    }
+    init_queue(&q);
+    enqueue(&q, root);
+    while (!queue_is_empty(&q))
+    {
+        struct tree *node = dequeue(&q);
+        printf("%d ", node->data);
+        if (node->left != NULL)
+            enqueue(&q, node->left);
+        if (node->right != NULL)
+            enqueue(&q, node->right);
+    }
+    printf("\n");
+}
+
+void recursive_menu()
+{
+    int choice;
+    int attempts;
+    char ch;
+
+    while (1)
+    {
+        printf("\n");
+        printf("RECURSIVE TRAVERSAL\n");
+        printf("1. Preorder\n");
+        printf("2. Inorder\n");
+        printf("3. Postorder\n");
+        printf("4. Back\n");
+
+        attempts = 0;
+        while (attempts < MAX_ATTEMPTS)
+        {
+            printf("Enter your choice: ");
+
+            if (scanf("%d", &choice) != 1)
+            {
+                printf("Invalid\n");
+                while (getchar() != '\n');
+                attempts++;
+            }
+            else
+            {
+                ch = getchar();
+                if (ch != '\n')
+                {
+                    printf("Invalid\n");
+                    while (getchar() != '\n');
+                    attempts++;
+                }
+                else if (choice < 1 || choice > 4)
+                {
+                    printf("Invalid\n");
+                    attempts++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        if (attempts == MAX_ATTEMPTS)
+        {
+            printf("Invalid\n");
+            return;
+        }
+
+        if (choice == 1)
+        {
+            printf("Recursive Preorder: ");
+            recursive_preorder(root);
+            printf("\n");
+        }
+        else if (choice == 2)
+        {
+            printf("Recursive Inorder: ");
+            recursive_inorder(root);
+            printf("\n");
+        }
+        else if (choice == 3)
+        {
+            printf("Recursive Postorder: ");
+            recursive_postorder(root);
+            printf("\n");
+        }
+        else if (choice == 4)
+        {
+            return;
+        }
+    }
+}
+
+void iterative_menu()
+{
+    int choice;
+    int attempts;
+    char ch;
+
+    while (1)
+    {
+        printf("\n");
+        printf("ITERATIVE TRAVERSAL\n");
+        printf("1. Inorder\n");
+        printf("2. Postorder\n");
+        printf("3. Normal Order\n");
+        printf("4. Preorder\n");
+        printf("5. Back\n");
+
+        attempts = 0;
+
+        while (attempts < MAX_ATTEMPTS)
+        {
+            printf("Enter your choice: ");
+
+            if (scanf("%d", &choice) != 1)
+            {
+                printf("Invalid\n");
+                while (getchar() != '\n');
+                attempts++;
+            }
+            else
+            {
+                ch = getchar();
+                if (ch != '\n')
+                {
+                    printf("Invalid\n");
+                    while (getchar() != '\n');
+                    attempts++;
+                }
+                else if (choice < 1 || choice > 5)
+                {
+                    printf("Invalid\n");
+                    attempts++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        if (attempts == MAX_ATTEMPTS)
+        {
+            printf("Invalid\n");
+            return;
+        }
+
+        if (choice == 1)
+        {
+            printf("Iterative Inorder: ");
+            iterative_inorder(root);
+            printf("\n");
+        }
+        else if (choice == 2)
+        {
+            printf("Iterative Postorder: ");
+            iterative_postorder(root);
+            printf("\n");
+        }
+        else if (choice == 3)
+        {
+            printf("Normal Order: ");
+            normal_order(root);
+            printf("\n");
+        }
+        else if (choice == 4)
+        {
+            printf("Iterative Preorder: ");
+            iterative_preorder(root);
+            printf("\n");
+        }
+        else if (choice == 5)
+        {
+            return;
+        }
+    }
+}
+
+void read_tree()
+{
+    int choice;
+    int attempts;
+    char ch;
 
     if (root == NULL)
-        return NULL;
+    {
+        printf("Tree is empty.\n");
+        return;
+    }
 
-    queue[rear++] = root;
+    while (1)
+    {
+        printf("\n");
+        printf("READ TREE\n");
+        printf("1. Recursive Traversal\n");
+        printf("2. Iterative Traversal\n");
+        printf("3. Back\n");
 
-    while (front < rear) {
-        temp = queue[front++];
+        attempts = 0;
+
+        while (attempts < MAX_ATTEMPTS)
+        {
+            printf("Enter your choice: ");
+
+            if (scanf("%d", &choice) != 1)
+            {
+                printf("Invalid\n");
+
+                while (getchar() != '\n');
+
+                attempts++;
+            }
+            else
+            {
+                ch = getchar();
+
+                if (ch != '\n')
+                {
+                    printf("Invalid\n");
+
+                    while (getchar() != '\n');
+
+                    attempts++;
+                }
+                else if (choice < 1 || choice > 3)
+                {
+                    printf("Invalid\n");
+                    attempts++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        if (attempts == MAX_ATTEMPTS)
+        {
+            printf("Invalid\n");
+            return;
+        }
+
+        if (choice == 1)
+        {
+            recursive_menu();
+        }
+        else if (choice == 2)
+        {
+            iterative_menu();
+        }
+        else if (choice == 3)
+        {
+            return;
+        }
+    }
+}
+
+void update_node()
+{
+    int old_value;
+    int new_value;
+    int valid;
+    int attempts;
+    char ch;
+    struct queue q;
+    struct tree *found = NULL;
+    if (root == NULL)
+    {
+        printf("Tree is empty.\n");
+        return;
+    }
+
+    old_value = getSearchValue(&valid);
+    if (valid == 0)
+        return;
+    init_queue(&q);
+    enqueue(&q, root);
+    while (!queue_is_empty(&q))
+    {
+        struct tree *temp = dequeue(&q);
+        if (temp->data == old_value)
+        {
+            found = temp;
+            break;
+        }
+        if (temp->left != NULL)
+            enqueue(&q, temp->left);
+        if (temp->right != NULL)
+            enqueue(&q, temp->right);
+    }
+
+    if (found == NULL)
+    {
+        printf("Value not found!\n");
+        return;
+    }
+
+    attempts = 0;
+    while (attempts < MAX_ATTEMPTS)
+    {
+        printf("Enter new value: ");
+        if (scanf("%d", &new_value) != 1)
+        {
+            printf("Invalid\n");
+            while (getchar() != '\n');
+            attempts++;
+        }
+        else
+        {
+            ch = getchar();
+            if (ch != '\n')
+            {
+                printf("Invalid\n");
+                while (getchar() != '\n');
+                attempts++;
+            }
+            else if (new_value == old_value)
+            {
+                printf("Invalid\n");
+                attempts++;
+            }
+            else if (isValueExists(new_value))
+            {
+                printf("Invalid\n");
+                attempts++;
+            }
+            else
+            {
+                found->data = new_value;
+                printf("Node updated successfully.\n");
+                return;
+            }
+        }
+    }
+
+    printf("Invalid\n");
+}
+
+void delete_node()
+{
+    int value, valid;
+    struct queue q;
+    struct tree *target = NULL;
+    struct tree *last = NULL;
+    struct tree *parent_last = NULL;
+
+    if (root == NULL)
+    {
+        printf("Tree is empty.\n");
+        return;
+    }
+    value = getSearchValue(&valid);
+    if (valid == 0)
+        return;
+
+    init_queue(&q);
+    enqueue(&q, root);
+
+    while (!queue_is_empty(&q))
+    {
+        struct tree *temp = dequeue(&q);
+
+        if (temp->data == value)
+            target = temp;
 
         if (temp->left != NULL)
-            queue[rear++] = temp->left;
-
+        {
+            enqueue(&q, temp->left);
+            parent_last = temp;
+            last = temp->left;
+        }
         if (temp->right != NULL)
-            queue[rear++] = temp->right;
+        {
+            enqueue(&q, temp->right);
+            parent_last = temp;
+            last = temp->right;
+        }
     }
-
-    return temp;
-}
-
-void deleteStudentOperation(struct Student **root) {
-    unsigned int id;
-    struct Student *target;
-    struct Student *deepest;
-
-    if (*root == NULL) {
-        printf("Invalid\n");
+    if (target == NULL)
+    {
+        printf("Value not found!\n");
         return;
     }
-
-    if (!getExistingId(*root, &id))
-        return;
-
-    target = search(*root, id);
-    deepest = getDeepestNode(*root);
-
-    if (target == deepest) {
-        free(deepest);
-        *root = NULL;
-        printf("Deleted!\n");
-        return;
-    }
-
-    target->id = deepest->id;
-    strcpy(target->name, deepest->name);
-    target->marks = deepest->marks;
-
-    deleteDeepest(*root, deepest);
-
-    printf("Deleted!\n");
-}
-
-void freeTree(struct Student *root) {
-    if (root != NULL) {
-        freeTree(root->left);
-        freeTree(root->right);
+    if (last == NULL)  // Only root exists
+    {
         free(root);
+        root = NULL;
+        printf("Node deleted successfully.\n");
+        return;
     }
+    target->data = last->data;   // Replace target’s data with last node’s data
+
+    if (parent_last->left == last)
+    {
+        // Free last node directly
+        parent_last->left = NULL;
+    }  
+    else
+    {
+        parent_last->right = NULL;
+    }
+    free(last);
+
+    printf("Node deleted successfully.\n");
 }
 
-int main() {
-    struct Student *root = NULL;
-    int choice, attempts;
-    char input[100], extra;
+// while (!queue_is_empty(&q))
+//     {
+//         struct tree *temp = dequeue(&q);
 
-    while (1) {
-        printf("\n1. Create\n");
+//         if (temp->left == last)
+//         {
+//             free(temp->left);
+//             temp->left = NULL;
+//             break;
+//         }
+//         if (temp->right == last)
+//         {
+//             free(temp->right);
+//             temp->right = NULL;
+//             break;
+//         }
+
+//         if (temp->left != NULL)
+//             enqueue(&q, temp->left);
+//         if (temp->right != NULL)
+//             enqueue(&q, temp->right);
+//     }
+
+//     printf("Node deleted successfully.\n");
+// }
+
+int main()
+{
+    int choice;
+    int attempts;
+    char ch;
+
+    while (1)
+    {
+        printf("\n");
+        printf("BINARY TREE CRUD\n");
+        printf("\n");
+        printf("1. Create\n");
         printf("2. Read\n");
-        printf("3. Update\n");
-        printf("4. Delete\n");
+        printf("3. Update Node\n");
+        printf("4. Delete Node\n");
         printf("5. Exit\n");
 
         attempts = 0;
 
-        while (attempts < MAX_ATTEMPTS) {
-            printf("Enter choice: ");
+        while (attempts < MAX_ATTEMPTS)
+        {
+            printf("Enter your choice: ");
 
-            if (fgets(input, sizeof(input), stdin) == NULL) {
+            if (scanf("%d", &choice) != 1)
+            {
                 printf("Invalid\n");
+
+                while (getchar() != '\n');
+
                 attempts++;
-                continue;
             }
+            else
+            {
+                ch = getchar();
 
-            if (sscanf(input, "%d %c", &choice, &extra) == 1) {
-                if (choice >= 1 && choice <= 5)
+                if (ch != '\n')
+                {
+                    printf("Invalid\n");
+
+                    while (getchar() != '\n');
+
+                    attempts++;
+                }
+                else if (choice < 1 || choice > 5)
+                {
+                    printf("Invalid\n");
+                    attempts++;
+                }
+                else
+                {
                     break;
+                }
             }
-
-            printf("Invalid\n");
-            attempts++;
         }
 
-        if (attempts == MAX_ATTEMPTS) {
+        if (attempts == MAX_ATTEMPTS)
+        {
             printf("Invalid\n");
             continue;
         }
 
-        switch (choice) {
-            case 1:
-                createStudent(&root);
-                break;
-
-            case 2:
-                readStudents(root);
-                break;
-
-            case 3:
-                updateStudent(root);
-                break;
-
-            case 4:
-                deleteStudentOperation(&root);
-                break;
-
-            case 5:
-                freeTree(root);
-                return 0;
+        if (choice == 1)
+        {
+            root = create_node();
+        }
+        else if (choice == 2)
+        {
+            read_tree();
+        }
+        else if (choice == 3)
+        {
+            update_node();
+        }
+        else if (choice == 4)
+        {
+            delete_node();
+        }
+        else if (choice == 5)
+        {
+            printf("Program exited successfully.\n");
+            break;
         }
     }
+
+    return 0;
 }
