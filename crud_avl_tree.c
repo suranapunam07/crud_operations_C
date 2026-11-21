@@ -1,8 +1,10 @@
-// -1  → right side slightly taller 
+
+ // -1  → right side slightly taller 
 //  0  → both sides same height     
 // +1  → left side slightly taller  
 #include <stdio.h>
 #include <stdlib.h>
+
 #define MAX_SIZE 100
 #define MAX_ATTEMPTS 3
 
@@ -13,51 +15,106 @@ struct tree
     struct tree *left;
     struct tree *right;
 };
+
 struct queue
 {
     struct tree *items[MAX_SIZE];
     int front;
     int rear;
 };
+
+struct stack
+{
+    struct tree *items[MAX_SIZE];
+    int top;
+};
+
 struct tree *root = NULL;
+
 void init_queue(struct queue *q)
 {
     q->front = 0;
     q->rear = 0;
 }
-void enqueue(struct queue *q, struct tree *node)
+
+int enqueue(struct queue *q, struct tree *node)
 {
-    if (q->rear < MAX_SIZE)
-    {
-        q->items[q->rear] = node;
-        q->rear++;
-    }
+    if (q->rear >= MAX_SIZE)
+        return 0;
+
+    q->items[q->rear] = node;
+    q->rear++;
+
+    return 1;
 }
+
 struct tree *dequeue(struct queue *q)
 {
     struct tree *node;
+
     if (q->front >= q->rear)
         return NULL;
+
     node = q->items[q->front];
     q->front++;
+
     return node;
 }
+
 int queue_is_empty(struct queue *q)
 {
-    if (q->front >= q->rear)
-        return 1;
-    return 0;
+    return q->front >= q->rear;
+}
+
+void init_stack(struct stack *s)
+{
+    s->top = -1;
+}
+
+int push(struct stack *s, struct tree *node)
+{
+    if (s->top >= MAX_SIZE - 1)
+        return 0;
+
+    s->top++;
+    s->items[s->top] = node;
+
+    return 1;
+}
+
+struct tree *pop(struct stack *s)
+{
+    if (s->top == -1)
+        return NULL;
+
+    return s->items[s->top--];
+}
+
+struct tree *peek(struct stack *s)
+{
+    if (s->top == -1)
+        return NULL;
+
+    return s->items[s->top];
+}
+
+int stack_is_empty(struct stack *s)
+{
+    return s->top == -1;
 }
 
 struct tree *create_node(int value)
 {
     struct tree *newNode;
-    newNode = (struct tree *)malloc(sizeof(struct tree));
+
+    newNode = malloc(sizeof(struct tree));
+
     if (newNode == NULL)
     {
         printf("Memory allocation failed.\n");
         return NULL;
     }
+
     newNode->data = value;
     newNode->height = 1;
     newNode->left = NULL;
@@ -71,6 +128,7 @@ int height_of(struct tree *node)
 {
     if (node == NULL)
         return 0;
+
     return node->height;
 }
 
@@ -78,6 +136,7 @@ int max_value(int a, int b)
 {
     if (a > b)
         return a;
+
     return b;
 }
 
@@ -86,6 +145,7 @@ int balance_of(struct tree *node)
 {
     if (node == NULL)
         return 0;
+
     return height_of(node->left) - height_of(node->right);
 }
 
@@ -94,7 +154,10 @@ void update_height(struct tree *node)
 {
     if (node != NULL)
     {
-        node->height = 1 + max_value( height_of(node->left),height_of(node->right));
+        node->height = 1 + max_value(
+            height_of(node->left),
+            height_of(node->right)
+        );
     }
 }
 
@@ -129,6 +192,7 @@ struct tree *left_rotate(struct tree *x)
 int isValueExists(int value)
 {
     struct tree *temp = root;
+
     while (temp != NULL)
     {
         if (value == temp->data)
@@ -145,24 +209,29 @@ int getValidValue(int *status)
 {
     int value;
     int attempts = 0;
-    char ch;
-
+    int ch;
     while (attempts < MAX_ATTEMPTS)
     {
         printf("Enter value: ");
+
         if (scanf("%d", &value) != 1)
         {
             printf("Invalid\n");
-            while (getchar() != '\n');
+
+            while ((ch = getchar()) != '\n' && ch != EOF);
+
             attempts++;
         }
         else
         {
             ch = getchar();
-            if (ch != '\n')
+
+            if (ch != '\n' && ch != EOF)
             {
                 printf("Invalid\n");
-                while (getchar() != '\n');
+
+                while ((ch = getchar()) != '\n' && ch != EOF);
+
                 attempts++;
             }
             else if (isValueExists(value))
@@ -179,7 +248,6 @@ int getValidValue(int *status)
     }
 
     printf("Invalid\n");
-
     *status = 0;
 
     return 0;
@@ -189,7 +257,7 @@ int getSearchValue(int *status)
 {
     int value;
     int attempts = 0;
-    char ch;
+    int ch;
 
     while (attempts < MAX_ATTEMPTS)
     {
@@ -198,16 +266,21 @@ int getSearchValue(int *status)
         if (scanf("%d", &value) != 1)
         {
             printf("Invalid\n");
-            while (getchar() != '\n');
+
+            while ((ch = getchar()) != '\n' && ch != EOF);
+
             attempts++;
         }
         else
         {
             ch = getchar();
-            if (ch != '\n')
+
+            if (ch != '\n' && ch != EOF)
             {
                 printf("Invalid\n");
-                while (getchar() != '\n');
+
+                while ((ch = getchar()) != '\n' && ch != EOF);
+
                 attempts++;
             }
             else if (!isValueExists(value))
@@ -224,7 +297,6 @@ int getSearchValue(int *status)
     }
 
     printf("Invalid\n");
-
     *status = 0;
 
     return 0;
@@ -252,23 +324,28 @@ struct tree *insert_node(struct tree *node, int value)
 
     // Update height after inserting the new node 
     update_height(node);
+
     balance = balance_of(node);
+
     // LL case
     if (balance > 1 && value < node->left->data)
     {
         return right_rotate(node);
     }
+
     // RR case 
     if (balance < -1 && value > node->right->data)
     {
         return left_rotate(node);
     }
+
     // LR case 
     if (balance > 1 && value > node->left->data)
     {
         node->left = left_rotate(node->left);
         return right_rotate(node);
     }
+
     //RL case 
     if (balance < -1 && value < node->right->data)
     {
@@ -281,7 +358,19 @@ struct tree *insert_node(struct tree *node, int value)
 
 void insert(int value)
 {
-    root = insert_node(root, value);
+    struct tree *newRoot = insert_node(root, value);
+
+    if (newRoot == NULL)
+    {
+        if (root == NULL)
+            printf("Insertion failed.\n");
+        else
+            printf("Memory allocation failed.\n");
+
+        return;
+    }
+
+    root = newRoot;
 
     printf("Node inserted successfully.\n");
 }
@@ -290,7 +379,7 @@ struct tree *find_min(struct tree *node)
 {
     struct tree *temp = node;
 
-    while (temp->left != NULL)
+    while (temp != NULL && temp->left != NULL)
         temp = temp->left;
 
     return temp;
@@ -301,6 +390,7 @@ struct tree *delete_node(struct tree *node, int value)
     int balance;
     struct tree *temp;
 
+    //find node position
     if (node == NULL)
         return NULL;
 
@@ -314,14 +404,14 @@ struct tree *delete_node(struct tree *node, int value)
     }
     else
     {
-        /* Case 1: node has no child */
+        // Case 1: node has no child 
         if (node->left == NULL && node->right == NULL)
         {
             free(node);
             return NULL;
         }
 
-        /* Case 2: node has only right child */
+        // Case 2: node has only right child
         if (node->left == NULL)
         {
             temp = node->right;
@@ -329,7 +419,7 @@ struct tree *delete_node(struct tree *node, int value)
             return temp;
         }
 
-        /* Case 3: node has only left child */
+        // Case 3: node has only left child
         if (node->right == NULL)
         {
             temp = node->left;
@@ -337,7 +427,7 @@ struct tree *delete_node(struct tree *node, int value)
             return temp;
         }
 
-        /* Case 4: node has two children */
+        // Case 4: node has two children
         temp = find_min(node->right);
 
         node->data = temp->data;
@@ -345,31 +435,31 @@ struct tree *delete_node(struct tree *node, int value)
         node->right = delete_node(node->right, temp->data);
     }
 
-    /* Recalculate height after deletion */
+    // Recalculate height after deletion
     update_height(node);
 
     balance = balance_of(node);
 
-    /* LL case */
+    // LL case
     if (balance > 1 && balance_of(node->left) >= 0)
     {
         return right_rotate(node);
     }
 
-    /* LR case */
+    // LR case
     if (balance > 1 && balance_of(node->left) < 0)
     {
         node->left = left_rotate(node->left);
         return right_rotate(node);
     }
 
-    /* RR case */
+    // RR case
     if (balance < -1 && balance_of(node->right) <= 0)
     {
         return left_rotate(node);
     }
 
-    /* RL case */
+    // RL case
     if (balance < -1 && balance_of(node->right) > 0)
     {
         node->right = right_rotate(node->right);
@@ -388,41 +478,94 @@ void delete_value(int value)
 
 void preorder(struct tree *node)
 {
+    struct stack s;
+    struct tree *temp;
+
     if (node == NULL)
         return;
 
-    printf("%d ", node->data);
+    init_stack(&s);
+    push(&s, node);
 
-    preorder(node->left);
-    preorder(node->right);
+    while (!stack_is_empty(&s))
+    {
+        temp = pop(&s);
+
+        printf("%d ", temp->data);
+
+        if (temp->right != NULL)
+            push(&s, temp->right);
+
+        if (temp->left != NULL)
+            push(&s, temp->left);
+    }
 }
 
 void inorder(struct tree *node)
 {
-    if (node == NULL)
-        return;
+    struct stack s;
+    struct tree *temp = node;
 
-    inorder(node->left);
+    init_stack(&s);
 
-    printf("%d ", node->data);
+    while (temp != NULL || !stack_is_empty(&s))
+    {
+        while (temp != NULL)
+        {
+            push(&s, temp);
+            temp = temp->left;
+        }
 
-    inorder(node->right);
+        temp = pop(&s);
+
+        printf("%d ", temp->data);
+
+        temp = temp->right;
+    }
 }
 
-void postorder(struct tree *node)
+void postorder_iterative(struct tree *node)
 {
+    struct stack s;
+    struct tree *temp;
+    struct tree *prev = NULL;
+
     if (node == NULL)
         return;
 
-    postorder(node->left);
-    postorder(node->right);
+    init_stack(&s);
+    temp = node;
 
-    printf("%d ", node->data);
+    while (temp != NULL || !stack_is_empty(&s))
+    {
+        if (temp != NULL)
+        {
+            push(&s, temp);
+            temp = temp->left;
+        }
+        else
+        {
+            temp = peek(&s);
+
+            if (temp->right != NULL && prev != temp->right)
+            {
+                temp = temp->right;
+            }
+            else
+            {
+                printf("%d ", temp->data);
+                prev = temp;
+                pop(&s);
+                temp = NULL;
+            }
+        }
+    }
 }
 
 void normal_order()
 {
     struct queue q;
+    struct tree *temp;
 
     if (root == NULL)
     {
@@ -431,19 +574,30 @@ void normal_order()
     }
 
     init_queue(&q);
-    enqueue(&q, root);
+
+    if (!enqueue(&q, root))
+    {
+        printf("Queue capacity exceeded.\n");
+        return;
+    }
 
     while (!queue_is_empty(&q))
     {
-        struct tree *temp = dequeue(&q);
+        temp = dequeue(&q);
 
         printf("%d ", temp->data);
 
-        if (temp->left != NULL)
-            enqueue(&q, temp->left);
+        if (temp->left != NULL && !enqueue(&q, temp->left))
+        {
+            printf("\nQueue capacity exceeded.\n");
+            return;
+        }
 
-        if (temp->right != NULL)
-            enqueue(&q, temp->right);
+        if (temp->right != NULL && !enqueue(&q, temp->right))
+        {
+            printf("\nQueue capacity exceeded.\n");
+            return;
+        }
     }
 
     printf("\n");
@@ -453,7 +607,7 @@ void read_tree()
 {
     int choice;
     int attempts;
-    char ch;
+    int ch;
 
     if (root == NULL)
     {
@@ -481,7 +635,7 @@ void read_tree()
             {
                 printf("Invalid\n");
 
-                while (getchar() != '\n');
+                while ((ch = getchar()) != '\n' && ch != EOF);
 
                 attempts++;
             }
@@ -489,18 +643,17 @@ void read_tree()
             {
                 ch = getchar();
 
-                if (ch != '\n')
+                if (ch != '\n' && ch != EOF)
                 {
                     printf("Invalid\n");
 
-                    while (getchar() != '\n');
+                    while ((ch = getchar()) != '\n' && ch != EOF);
 
                     attempts++;
                 }
                 else if (choice < 1 || choice > 5)
                 {
                     printf("Invalid\n");
-
                     attempts++;
                 }
                 else
@@ -536,7 +689,7 @@ void read_tree()
 
             case 4:
                 printf("Postorder: ");
-                postorder(root);
+                postorder_iterative(root);
                 printf("\n");
                 break;
 
@@ -552,7 +705,8 @@ void update_node()
     int newValue;
     int status;
     int attempts;
-    char ch;
+    int ch;
+    struct tree *newRoot;
 
     oldValue = getSearchValue(&status);
 
@@ -569,7 +723,7 @@ void update_node()
         {
             printf("Invalid\n");
 
-            while (getchar() != '\n');
+            while ((ch = getchar()) != '\n' && ch != EOF);
 
             attempts++;
         }
@@ -577,33 +731,38 @@ void update_node()
         {
             ch = getchar();
 
-            if (ch != '\n')
+            if (ch != '\n' && ch != EOF)
             {
                 printf("Invalid\n");
 
-                while (getchar() != '\n');
+                while ((ch = getchar()) != '\n' && ch != EOF);
 
                 attempts++;
             }
             else if (newValue == oldValue)
             {
                 printf("Invalid\n");
-
                 attempts++;
             }
             else if (isValueExists(newValue))
             {
                 printf("New value already exists.\n");
-
                 attempts++;
             }
             else
             {
                 root = delete_node(root, oldValue);
-                root = insert_node(root, newValue);
+                newRoot = insert_node(root, newValue);
+
+                if (newRoot == NULL)
+                {
+                    printf("Memory allocation failed. Old value was removed.\n");
+                    return;
+                }
+
+                root = newRoot;
 
                 printf("Value updated successfully.\n");
-
                 return;
             }
         }
@@ -618,7 +777,7 @@ int main()
     int value;
     int status;
     int attempts;
-    char ch;
+    int ch;
 
     while (1)
     {
@@ -640,7 +799,7 @@ int main()
             {
                 printf("Invalid\n");
 
-                while (getchar() != '\n');
+                while ((ch = getchar()) != '\n' && ch != EOF);
 
                 attempts++;
             }
@@ -648,18 +807,17 @@ int main()
             {
                 ch = getchar();
 
-                if (ch != '\n')
+                if (ch != '\n' && ch != EOF)
                 {
                     printf("Invalid\n");
 
-                    while (getchar() != '\n');
+                    while ((ch = getchar()) != '\n' && ch != EOF);
 
                     attempts++;
                 }
                 else if (choice < 1 || choice > 5)
                 {
                     printf("Invalid\n");
-
                     attempts++;
                 }
                 else
