@@ -3,9 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
-
 #define MAX 5
-
 struct Student
 {
     unsigned int id;
