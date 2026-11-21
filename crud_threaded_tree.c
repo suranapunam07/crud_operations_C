@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#define MAX 20
 struct tree
 {
     int data;
@@ -12,7 +12,7 @@ struct tree
 struct tree *root = NULL;
 
 
-/* Create a new node */
+// Create a new node 
 struct tree *create_node(int value)
 {
     struct tree *newnode;
@@ -24,6 +24,7 @@ struct tree *create_node(int value)
         printf("Memory allocation failed.\n");
         return NULL;
     }
+
     newnode->data = value;
     newnode->left = NULL;
     newnode->right = NULL;
@@ -31,12 +32,10 @@ struct tree *create_node(int value)
     return newnode;
 }
 
-
-/* Check whether value already exists */
+// Check whether value already exists
 int isValueExists(int value)
 {
     struct tree *temp;
-
     temp = root;
 
     while (temp != NULL)
@@ -61,7 +60,7 @@ int isValueExists(int value)
 }
 
 
-/* Insert a node */
+// Insert a node
 void insert(int value)
 {
     struct tree *newnode;
@@ -73,16 +72,21 @@ void insert(int value)
         printf("Value already exists.\n");
         return;
     }
+
     newnode = create_node(value);
+
     if (newnode == NULL)
         return;
+
     if (root == NULL)
     {
         root = newnode;
         return;
     }
+
     temp = root;
     parent = NULL;
+
     while (temp != NULL)
     {
         parent = temp;
@@ -99,7 +103,7 @@ void insert(int value)
             temp = temp->right;
         }
     }
-    /* Insert on left side */
+    // Insert on left side 
     if (value < parent->data)
     {
         newnode->right = parent;
@@ -107,18 +111,18 @@ void insert(int value)
         parent->left = newnode;
     }
 
-    /* Insert on right side */
+    // Insert on right side
     else
     {
         newnode->right = parent->right;
-        newnode->rightThread = 1;
-        parent->right = newnode;
+        newnode->rightThread = parent->rightThread;
+        parent->right = newnode; 
         parent->rightThread = 0;
     }
 }
 
 
-/* Find the leftmost node */
+// Find the leftmost node
 struct tree *leftmost(struct tree *node)
 {
     if (node == NULL)
@@ -131,7 +135,7 @@ struct tree *leftmost(struct tree *node)
 }
 
 
-/* Find inorder successor */
+// Find inorder successor
 struct tree *inorder_successor(struct tree *node)
 {
     if (node == NULL)
@@ -144,7 +148,7 @@ struct tree *inorder_successor(struct tree *node)
 }
 
 
-/* Inorder traversal */
+// Inorder traversal
 void inorder()
 {
     struct tree *temp;
@@ -156,13 +160,11 @@ void inorder()
     }
 
     temp = leftmost(root);
-
     printf("Inorder: ");
 
     while (temp != NULL)
     {
         printf("%d ", temp->data);
-
         temp = inorder_successor(temp);
     }
 
@@ -170,7 +172,99 @@ void inorder()
 }
 
 
-/* Search a node */
+// Normal Inorder Traversal
+void inorder_traversal(struct tree *node)
+{
+    struct tree *stack[MAX];
+    int top = -1;
+    struct tree *temp;
+
+    temp = node;
+
+    while (temp != NULL || top != -1)
+    {
+        while (temp != NULL)
+        {
+            stack[++top] = temp;
+            temp = temp->left;
+        }
+
+        temp = stack[top--];
+        printf("%d ", temp->data);
+
+        if (temp->rightThread == 0)
+            temp = temp->right;
+        else
+            temp = NULL;
+    }
+}
+
+
+// Preorder Traversal
+void preorder_traversal(struct tree *node)
+{
+    struct tree *stack[MAX];
+    int top = -1;
+    struct tree *temp;
+
+    if (node == NULL)
+        return;
+
+    stack[++top] = node;
+
+    while (top != -1)
+    {
+        temp = stack[top--];
+        printf("%d ", temp->data);
+
+        if (temp->rightThread == 0 && temp->right != NULL)
+            stack[++top] = temp->right;
+
+        if (temp->left != NULL)
+            stack[++top] = temp->left;
+    }
+}
+
+
+// Postorder Traversal
+void postorder_traversal(struct tree *node)
+{
+    struct tree *stack[MAX];
+    int top = -1;
+    struct tree *current;
+    struct tree *lastVisited;
+    struct tree *temp;
+
+    current = node;
+    lastVisited = NULL;
+
+    while (current != NULL || top != -1)
+    {
+        if (current != NULL)
+        {
+            stack[++top] = current;
+            current = current->left;
+        }
+        else
+        {
+            temp = stack[top];
+
+            if (temp->rightThread == 0 &&
+                temp->right != NULL &&
+                lastVisited != temp->right)
+            {
+                current = temp->right;
+            }
+            else
+            {
+                printf("%d ", temp->data);
+                lastVisited = stack[top--];
+            }
+        }
+    }
+}
+
+// Search a node
 void search(int value)
 {
     struct tree *temp;
@@ -202,74 +296,66 @@ void search(int value)
 }
 
 
-/* Delete a node */
+// Delete a node
+
 void delete_node(int value)
 {
     struct tree *parent;
     struct tree *current;
-    struct tree *successor;
-    struct tree *successor_parent;
+    struct tree *smallest;
+    struct tree *smallest_parent;
     struct tree *child;
+    struct tree *temp;
 
     parent = NULL;
     current = root;
 
-    /* Find the node */
-    while (current != NULL)
+    // Case 1: Find node
+    while (current != NULL && current->data != value)
     {
-        if (value == current->data)
-            break;
-
         parent = current;
 
         if (value < current->data)
         {
             current = current->left;
         }
+        else if (current->rightThread == 0)
+        {
+            current = current->right;
+        }
         else
         {
-            if (current->rightThread == 1)
-            {
-                current = NULL;
-            }
-            else
-            {
-                current = current->right;
-            }
+            current = NULL;
         }
     }
+
+    // Case 2: Node not found
     if (current == NULL)
     {
         printf("Value not found.\n");
         return;
     }
 
-      // Node has two real children
+    // Case 3: Node has two children
     if (current->left != NULL &&
         current->rightThread == 0 &&
         current->right != NULL)
     {
-        successor_parent = current;
-        successor = current->right;
+        smallest_parent = current;
+        smallest = current->right;
 
-        while (successor->left != NULL)
+        while (smallest->left != NULL)
         {
-            successor_parent = successor;
-            successor = successor->left;
+            smallest_parent = smallest;
+            smallest = smallest->left;
         }
 
-        current->data = successor->data;
-
-        current = successor;
-        parent = successor_parent;
+        current->data = smallest->data;
+        parent = smallest_parent;
+        current = smallest;
     }
 
-
-    /*
-       Find the real child of current.
-
-       A thread is NOT a child.
-    */
+    // Case 4: Find real child
     if (current->left != NULL)
     {
         child = current->left;
@@ -284,27 +370,19 @@ void delete_node(int value)
         child = NULL;
     }
 
-    //Node has no real child
+    // Case 5: Node is a leaf
     if (child == NULL)
     {
-          // Deleting root
         if (parent == NULL)
         {
             root = NULL;
         }
-
-           //Current is left child
         else if (parent->left == current)
         {
             parent->left = NULL;
         }
-
-           //Current is right child
         else
         {
-            
-              // Parent's right pointer becomes
-               // a thread to current's successor.
             parent->right = current->right;
             parent->rightThread = 1;
         }
@@ -314,40 +392,34 @@ void delete_node(int value)
         return;
     }
 
-      // Node has one real child
-
-       //If current has a left child
-    
+    // Case 6: Node has one child
+    // Find the child to reconnect
     if (current->left != NULL)
     {
         child = current->left;
     }
-
-    
-      // Otherwise current has a real right child
     else
     {
         child = current->right;
     }
 
-      // Deleting root with one child
-    
     if (parent == NULL)
     {
         root = child;
 
-        /*
-           If current had a left child,
-           child's right thread should point
-           to current's inorder successor.
-        */
-        if (current->left != NULL)
+        if (current->left != NULL &&
+            current->rightThread == 1)
         {
-            if (current->rightThread == 1)
+            temp = child;
+
+            while (temp->rightThread == 0 &&
+                   temp->right != NULL)
             {
-                child->right = current->right;
-                child->rightThread = 1;
+                temp = temp->right;
             }
+
+            temp->right = current->right;
+            temp->rightThread = 1;
         }
 
         free(current);
@@ -355,23 +427,13 @@ void delete_node(int value)
         return;
     }
 
-
-    /*
-       Current is left child of parent
-    */
     if (parent->left == current)
     {
         parent->left = child;
 
-        /*
-           If current had a left child,
-           its successor is current's successor.
-        */
         if (current->left != NULL &&
             current->rightThread == 1)
         {
-            struct tree *temp;
-
             temp = child;
 
             while (temp->rightThread == 0 &&
@@ -384,23 +446,19 @@ void delete_node(int value)
             temp->rightThread = 1;
         }
     }
-
-    /*
-       Current is right child of parent
-    */
     else
     {
         parent->right = child;
         parent->rightThread = 0;
     }
 
+    // Case 7: Free deleted node
     free(current);
-
     printf("Node deleted successfully.\n");
 }
 
 
-/* Update a node */
+// Update a node
 void update_node(int oldValue, int newValue)
 {
     if (!isValueExists(oldValue))
@@ -429,6 +487,7 @@ int main()
     int value;
     int oldValue;
     int newValue;
+    int traversalChoice;
 
     while (1)
     {
@@ -455,7 +514,38 @@ int main()
                 break;
 
             case 2:
-                inorder();
+                printf("\n========== READ TREE ==========\n");
+                printf("1. Inorder Traversal\n");
+                printf("2. Preorder Traversal\n");
+                printf("3. Postorder Traversal\n");
+                printf("===============================\n");
+
+                printf("Enter your choice: ");
+                scanf("%d", &traversalChoice);
+
+                switch (traversalChoice)
+                {
+                    case 1:
+                        printf("Inorder: ");
+                        inorder_traversal(root);
+                        printf("\n");
+                        break;
+
+                    case 2:
+                        printf("Preorder: ");
+                        preorder_traversal(root);
+                        printf("\n");
+                        break;
+
+                    case 3:
+                        printf("Postorder: ");
+                        postorder_traversal(root);
+                        printf("\n");
+                        break;
+
+                    default:
+                        printf("Invalid choice.\n");
+                }
                 break;
 
             case 3:
@@ -474,7 +564,6 @@ int main()
 
                 update_node(oldValue, newValue);
                 break;
-
             case 5:
                 printf("Enter value to delete: ");
                 scanf("%d", &value);
